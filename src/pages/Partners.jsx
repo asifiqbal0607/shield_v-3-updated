@@ -49,8 +49,11 @@ function deriveNodes(partners) {
     id:             `node-${p.id}`,
     name:           p.name,
     geo:            p.country,
+    // A partner is "direct" if isDirectClient===true, regardless of aggregator
+    // A partner is "aggregator" if type==="Aggregator"
+    // Otherwise plain "csp"
     role:           p.type === "Aggregator" ? "aggregator"
-                  : (!p.aggregatorId && p.isDirectClient) ? "direct" : "csp",
+                  : p.isDirectClient ? "direct" : "csp",
     parentId:       p.aggregatorId ? `node-${p.aggregatorId}` : null,
     isDirectClient: p.isDirectClient || false,
   }));
@@ -338,7 +341,8 @@ function NodeCard({ node, isDragging, onDragStart }) {
 
 /* ── Hierarchy: Aggregator Lane ─────────────────────────────────────────── */
 function AggLane({ agg, children, onDrop, onDragOver, draggingId }) {
-  const [expanded, setExpanded] = useState(false);
+  // FIX 1: Start expanded=true so all CSPs are visible by default
+  const [expanded, setExpanded] = useState(true);
   const shown = expanded ? children : children.slice(0,4);
   const extra = children.length - 4;
   const av    = avColors(agg.name);
@@ -372,7 +376,8 @@ function AggLane({ agg, children, onDrop, onDragOver, draggingId }) {
 }
 
 /* ── Hierarchy: Direct Clients ───────────────────────────────────────────── */
-function DirectSection({ nodes, onDrop, onDragOver, draggingId, onDragStart }) {
+// FIX 2: Added onRemove prop and × button on each chip
+function DirectSection({ nodes, onDrop, onDragOver, draggingId, onDragStart, onRemove }) {
   return (
     <div className="ph-hier-direct">
       <div className="ph-hier-direct-hd">
@@ -394,10 +399,29 @@ function DirectSection({ nodes, onDrop, onDragOver, draggingId, onDragStart }) {
               <div className="partner-row-avatar" style={{background:av.bg,color:av.c,width:28,height:28,fontSize:11,flexShrink:0}}>
                 {n.name[0]}
               </div>
-              <div>
+              <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:12,fontWeight:600,color:"var(--text)"}}>{n.name}</div>
                 <div style={{fontSize:10,color:"var(--text-4)",marginTop:1}}>{FLAG[n.geo]??""} {n.geo}</div>
               </div>
+              {/* FIX 2: Remove button */}
+              <button
+                onClick={(e)=>{e.stopPropagation();onRemove(n.id);}}
+                title="Remove from direct clients"
+                style={{
+                  background:"none",
+                  border:"none",
+                  cursor:"pointer",
+                  fontSize:16,
+                  color:"var(--text-4)",
+                  lineHeight:1,
+                  padding:"2px 4px",
+                  borderRadius:4,
+                  flexShrink:0,
+                  transition:"color .15s",
+                }}
+                onMouseEnter={(e)=>e.currentTarget.style.color="var(--color-danger)"}
+                onMouseLeave={(e)=>e.currentTarget.style.color="var(--text-4)"}
+              >×</button>
             </div>
           );
         }) : <div className="ph-hier-empty" style={{padding:"20px 0",width:"100%"}}>Drop clients here</div>}
@@ -429,8 +453,17 @@ function HierarchyTab({ nodes, onReparent }) {
     setDraggingId(null);
   },[draggingId,nodes,onReparent]);
 
+  // FIX 2: handler to remove a direct client (demotes back to plain CSP)
+  const handleRemoveDirect = useCallback((nodeId) => {
+    const node = nodes.find((n) => n.id === `node-${nodeId}`);
+    if (!node) return;
+    showToast(`"${node.name}" removed from Direct Clients`);
+    onReparent(`node-${nodeId}`, null, "csp");
+  }, [nodes, onReparent]);
+
   const aggregators   = nodes.filter((n)=>n.role==="aggregator");
-  const directClients = nodes.filter((n)=>n.role==="direct"&&!n.parentId);
+  // Show ALL isDirectClient partners — including those who also sit under an aggregator
+  const directClients = nodes.filter((n)=>n.role==="direct");
 
   return (
     <div className="ph-hier-root">
@@ -455,8 +488,14 @@ function HierarchyTab({ nodes, onReparent }) {
         <span className="stat-sublabel" style={{marginLeft:"auto"}}>⠿ Drag to reassign</span>
       </div>
 
-      <DirectSection nodes={directClients} onDrop={handleDrop} onDragOver={handleDragOver}
-        draggingId={draggingId} onDragStart={handleDragStart}/>
+      <DirectSection
+        nodes={directClients}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        draggingId={draggingId}
+        onDragStart={handleDragStart}
+        onRemove={handleRemoveDirect}
+      />
 
       <div className="ph-hier-grid">
         {aggregators.map((agg)=>{
