@@ -28,10 +28,10 @@ const PARTNER_ROWS = [
   { id:"PTR-014", name:"IQConnect",        contact:"Sipho Dlamini",   email:"sipho5@mtn.co.za",          country:"IQ", revenue:"R 980,000",     status:"active",   joined:"2023-03-08", lastActive:"Today",   type:"CSP", isDirectClient:false, aggregatorId:"PTR-012" },
   { id:"PTR-015", name:"IQBroadband",      contact:"Sipho Dlamini",   email:"sipho6@mtn.co.za",          country:"IQ", revenue:"R 980,000",     status:"active",   joined:"2023-03-08", lastActive:"Today",   type:"CSP", isDirectClient:false, aggregatorId:"PTR-012" },
   { id:"PTR-008", name:"Airtel Nigeria",   contact:"Chukwuemeka O.",  email:"chukwu@airtel.ng",          country:"NG", revenue:"₦ 2,100,000",   status:"active",   joined:"2023-07-01", lastActive:"Today",   type:"CSP", isDirectClient:true,  aggregatorId:"PTR-006" },
-  { id:"PTR-016", name:"Orange Senegal",   contact:"Moussa Diop",     email:"moussa@orange.sn",          country:"SN", revenue:"CFA 890,000",   status:"warning",  joined:"2023-09-14", lastActive:"8d ago",  type:"CSP", isDirectClient:false, aggregatorId:"PTR-006" },
+  { id:"PTR-016", name:"Orange Senegal",   contact:"Moussa Diop",     email:"moussa@orange.sn",          country:"SN", revenue:"CFA 890,000",   status:"needsattention",  joined:"2023-09-14", lastActive:"8d ago",  type:"CSP", isDirectClient:false, aggregatorId:"PTR-006" },
   { id:"PTR-017", name:"Telecel Zimbabwe", contact:"Tatenda Moyo",    email:"tatenda@telecel.co.zw",     country:"ZW", revenue:"USD 45,000",    status:"active",   joined:"2024-02-18", lastActive:"1d ago",  type:"CSP", isDirectClient:false, aggregatorId:"PTR-006" },
   { id:"PTR-009", name:"True",             contact:"Bereket Alemu",   email:"bereket@ethiotelecom.et",   country:"ET", revenue:"ETB 820,000",   status:"active",   joined:"2023-08-09", lastActive:"Today",   type:"CSP", isDirectClient:true,  aggregatorId:null },
-  { id:"PTR-010", name:"Dtac",             contact:"Omar Al-Rashid",  email:"omar@sudatel.sd",           country:"SD", revenue:"SDG 340,000",   status:"warning",  joined:"2024-03-01", lastActive:"5d ago",  type:"CSP", isDirectClient:true,  aggregatorId:null },
+  { id:"PTR-010", name:"Dtac",             contact:"Omar Al-Rashid",  email:"omar@sudatel.sd",           country:"SD", revenue:"SDG 340,000",   status:"needsattention",  joined:"2024-03-01", lastActive:"5d ago",  type:"CSP", isDirectClient:true,  aggregatorId:null },
   { id:"PTR-018", name:"IQ Services",      contact:"Mwila Mwansa",    email:"mwila@zamtel.zm",           country:"ZM", revenue:"ZMW 98,000",    status:"active",   joined:"2024-04-12", lastActive:"3d ago",  type:"CSP", isDirectClient:true,  aggregatorId:null },
   { id:"PTR-019", name:"Media World",      contact:"Mwila Mwansa",    email:"mwila2@zamtel.zm",          country:"ZM", revenue:"ZMW 98,000",    status:"active",   joined:"2024-04-12", lastActive:"3d ago",  type:"CSP", isDirectClient:true,  aggregatorId:null },
   { id:"PTR-020", name:"Gameloft",         contact:"Mwila Mwansa",    email:"mwila3@zamtel.zm",          country:"ZM", revenue:"ZMW 98,000",    status:"active",   joined:"2024-04-12", lastActive:"3d ago",  type:"CSP", isDirectClient:true,  aggregatorId:null },
@@ -164,7 +164,7 @@ function PartnerModal({ partner, onClose, onSave, onDelete }) {
                   <label className="form-label">Status</label>
                   <select className="form-input" value={form.status} onChange={(e) => set("status",e.target.value)}>
                     <option value="active">Active</option>
-                    <option value="warning">Warning</option>
+                    <option value="needsattention">Needs Attention</option>
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>
@@ -495,7 +495,7 @@ function ManageTab({ partners, setPartners, onAddClick }) {
   const visible  = filtered.slice(0,perPage);
   const total    = partners.length;
   const active   = partners.filter((p)=>p.status==="active").length;
-  const warning  = partners.filter((p)=>p.status==="warning").length;
+  const needsattention  = partners.filter((p)=>p.status==="needsattention").length;
   const inactive = partners.filter((p)=>p.status==="inactive").length;
 
   return (
@@ -505,7 +505,7 @@ function ManageTab({ partners, setPartners, onAddClick }) {
         {[
           {label:"Total Partners", value:total,    color:BLUE },
           {label:"Active",         value:active,   color:GREEN},
-          {label:"Needs Attention",value:warning,  color:AMBER},
+          {label:"Needs Attention",value:needsattention,  color:AMBER},
           {label:"Inactive",       value:inactive, color:ROSE },
         ].map((s)=>(
           <Card key={s.label}>
@@ -539,7 +539,7 @@ function ManageTab({ partners, setPartners, onAddClick }) {
           <div className="f-col-10" style={{paddingTop:4}}>
             {[
               {label:"Active",         count:active,   color:GREEN,pct:Math.round(active/total*100)},
-              {label:"Needs Attention",count:warning,  color:AMBER,pct:Math.round(warning/total*100)},
+              {label:"Needs Attention",count:needsattention,  color:AMBER,pct:Math.round(needsattention/total*100)},
               {label:"Inactive",       count:inactive, color:ROSE, pct:Math.round(inactive/total*100)},
             ].map((s)=>(
               <div key={s.label}>
@@ -571,7 +571,7 @@ function ManageTab({ partners, setPartners, onAddClick }) {
               <span className="dt-entries-lbl">entries</span>
             </div>
             <div className="f-gap-6">
-              {["All","Active","Warning","InActive"].map((f)=>(
+              {["All","Active","Needs Attention","Inactive"].map((f)=>(
                 <button key={f} onClick={()=>setFilter(f)}
                   className={`partner-filter-pill ${filter===f?"active":"inactive"}`}>{f}</button>
               ))}
