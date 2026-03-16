@@ -55,6 +55,7 @@ function deriveNodes(partners) {
     role:           p.type === "Aggregator" ? "aggregator"
                   : p.isDirectClient ? "direct" : "csp",
     parentId:       p.aggregatorId ? `node-${p.aggregatorId}` : null,
+    status:         p.status,
     isDirectClient: p.isDirectClient || false,
   }));
 }
@@ -462,8 +463,8 @@ function HierarchyTab({ nodes, onReparent }) {
   }, [nodes, onReparent]);
 
   const aggregators   = nodes.filter((n)=>n.role==="aggregator");
-  // Show ALL isDirectClient partners — including those who also sit under an aggregator
-  const directClients = nodes.filter((n)=>n.role==="direct");
+  // Show only ACTIVE direct clients
+  const directClients = nodes.filter((n)=>n.role==="direct"&&n.status==="active");
 
   return (
     <div className="ph-hier-root">
