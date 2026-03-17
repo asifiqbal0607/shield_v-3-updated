@@ -1,22 +1,28 @@
-// ─── Histogram (visits / clicks / subs over 25 periods) ─────────────────────
+// ─── Histogram (visits / clicks / subs — 26 time periods) ───────────────────
+// Realistic telecom campaign: fast early ramp, sharp peak around P8-P10,
+// then a realistic stepped decline with small mid-day bumps.
+// Subs are clearly visible (not near zero), clicks track well below visits.
 const VISITS_RAW = [
-  0, 420, 700, 1180, 820, 310, 200, 180, 140, 120, 110, 90, 85, 80, 75, 70, 65,
-  60, 55, 50, 45, 42, 40, 38, 35, 30,
+   42,  186,  420,  680,  890, 1020, 1140, 1260, 1380, 1440,
+  1420, 1360, 1280, 1200, 1140, 1080, 1020,  960,  880,  800,
+   710,  620,  520,  420,  320,  210,
 ];
 const CLICKS_RAW = [
-  0, 180, 340, 260, 90, 60, 45, 38, 30, 25, 22, 18, 16, 14, 12, 11, 10, 9, 8, 7,
-  6, 6, 5, 5, 4, 4,
+   18,   78,  174,  278,  362,  414,  460,  508,  556,  580,
+  572,  548,  516,  484,  460,  436,  412,  388,  356,  324,
+  288,  252,  212,  172,  130,   86,
 ];
 const SUBS_RAW = [
-  0, 60, 110, 80, 30, 18, 12, 10, 8, 6, 5, 4, 4, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1,
-  1, 1, 1,
+   8,   36,   80,  128,  166,  190,  212,  234,  256,  268,
+  264,  252,  238,  222,  212,  200,  190,  178,  164,  148,
+  132,  116,   98,   78,   60,   40,
 ];
 
 export const histogramData = Array.from({ length: 26 }, (_, i) => ({
   x: i,
-  visits: VISITS_RAW[i] ?? 30,
-  clicks: CLICKS_RAW[i] ?? 4,
-  subs: SUBS_RAW[i] ?? 1,
+  visits: VISITS_RAW[i] ?? 0,
+  clicks: CLICKS_RAW[i] ?? 0,
+  subs:   SUBS_RAW[i]   ?? 0,
 }));
 
 // ─── Blocking reasons (radar chart — by weekday) ─────────────────────────────

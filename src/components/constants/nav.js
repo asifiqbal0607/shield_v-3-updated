@@ -88,10 +88,31 @@ export const NAV_GROUPS = [
         roles: ["admin", "partner"],
       },
       {
+        key: "traffic-sources",
+        label: "Traffic Sources",
+        icon: "📶",
+        roles: ["admin"],
+        badge: { n: "New", c: GREEN },
+      },
+      {
         key: "ip-manager",
         label: "IP Manager",
         icon: "🌐",
         roles: ["partner"],
+      },
+    ],
+  },
+
+  // ── More — partner-only extras ───────────────────────────────────────────
+  {
+    group: "More",
+    items: [
+      {
+        key: "traffic-sources",
+        label: "Traffic Sources",
+        icon: "📶",
+        roles: ["partner"],
+        badge: { n: "New", c: GREEN },
       },
     ],
   },

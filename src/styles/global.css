@@ -909,38 +909,43 @@ table tbody td {
 
 /* Individual channel card */
 .ov-channel-card {
-  padding: 8px 10px !important;
+  padding: 10px 12px !important;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: 6px;
+  gap: 0;
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
+  cursor: pointer;
+  transition: box-shadow .15s, border-color .15s;
+}
+
+.ov-channel-card:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,.10);
 }
 
 /* Channel card title row */
 .ov-channel-title {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   color: #1a1a2e;
-  padding-bottom: 2px;
-  margin-bottom: 3px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
   transition: opacity .15s;
-  /* border-bottom color stays inline — it's dynamic */
+  border-bottom: 2px solid var(--c, var(--border));
 }
 
 .ov-channel-title:hover {
-  opacity: .7;
+  opacity: .75;
 }
 
 .ov-channel-title-arrow {
-  font-size: 9px;
-  color: #94a3b8;
+  font-size: 11px;
+  color: var(--c, #94a3b8);
   font-weight: 400;
 }
 
@@ -950,15 +955,16 @@ table tbody td {
   align-items: center;
   justify-content: space-between;
   flex: 1;
+  gap: 8px;
 }
 
 /* Each clickable metric (Clicks / Visits) */
 .ov-metric-item {
-  padding: 1px 4px;
+  padding: 4px 6px;
   border-radius: 6px;
   cursor: pointer;
   transition: background .15s;
-  margin-bottom: 0;
+  margin-bottom: 6px;
 }
 
 .ov-metric-item:last-child {
@@ -971,30 +977,87 @@ table tbody td {
 
 .ov-metric-label {
   font-size: 10px;
-  color: var(--color-slate, #64748b);
-  margin-bottom: 0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-4);
+  margin-bottom: 2px;
 }
 
 .ov-metric-num-clicks {
-  font-size: 11px;
-  font-weight: 700;
-  color: #f97316;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--c, #f97316);
   font-family: 'Nunito', sans-serif;
-  line-height: 1.2;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
 }
 
 .ov-metric-num-visits {
-  font-size: 11px;
-  font-weight: 700;
-  color: #0d9488;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
   font-family: 'Nunito', sans-serif;
-  line-height: 1.2;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
 }
 
 .ov-metric-link {
-  font-size: 8px;
+  font-size: 9px;
   color: #94a3b8;
-  margin-top: 1px;
+  margin-top: 2px;
+}
+
+/* Donut + label wrapper */
+.ov-channel-donut-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ov-channel-donut-label {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  font-family: 'Nunito', sans-serif;
+}
+
+.ov-channel-donut-sub {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-4);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+/* Click rate bar at bottom of card */
+.ov-channel-rate {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.ov-channel-rate-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.ov-channel-rate-label {
+  font-size: 10px;
+  color: var(--text-4);
+  font-weight: 500;
+}
+
+.ov-channel-rate-pct {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c, var(--color-primary));
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -19677,4 +19740,263 @@ table tbody td {
 
 @media (max-width: 639px) {
   .ph-hier-grid { grid-template-columns: 1fr; }
+}/* ══════════════════════════════════════════════════════════════════════════
+   OVERVIEW PAGE — additions for refactored Overview.jsx
+   Paste these at the end of global.css
+══════════════════════════════════════════════════════════════════════════ */
+
+/* ── KPI card accent bar (top gradient strip, dynamic color stays inline) ── */
+.ov-kpi-accent-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 14px 14px 0 0;
+}
+
+/* ── KPI yesterday comparison row ── */
+.ov-kpi-comp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0 0;
+  border-top: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.ov-kpi-comp-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+.ov-kpi-comp-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Block reasons header ── */
+.ov-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ov-block-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #fee2e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ov-block-total {
+  text-align: right;
+}
+
+.ov-block-total-num {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1d4ed8;
+  line-height: 1;
+}
+
+/* ── Block stat side items ── */
+.ov-bl-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.ov-bl-num {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 4px 0 2px;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+/* ── Main chart icon badge ── */
+.ov-chart-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #22c55e18, #3b82f618);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Chart summary row (Visits / Clicks / Subs / Click rate) ── */
+.ov-chart-summary-row {
+  display: flex;
+  gap: 20px;
+  padding-top: 10px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.ov-chart-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Channel card hover glow (dynamic color via onMouseEnter remains inline) ── */
+.ov-channel-card--hover {
+  transition: box-shadow .15s, border-color .15s;
+  cursor: pointer;
+}
+
+/* ── Channel card metric numbers ── */
+.ov-channel-metric-num {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+/* ── Channel click rate row ── */
+.ov-channel-rate-row {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.ov-channel-rate-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+/* ── Channel title arrow ── */
+.ov-channel-title-arrow {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* ── kpi-change-up / dn pill backgrounds ── */
+.kpi-change-up {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.kpi-change-dn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+/* ══════════════════════════════════════════════════════════════════════════
+   OVERVIEW — Top 10 Block Reasons list
+══════════════════════════════════════════════════════════════════════════ */
+
+.ov-reasons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 300px;
+  flex-shrink: 0;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+
+.ov-reasons-list::-webkit-scrollbar { width: 4px; }
+.ov-reasons-list::-webkit-scrollbar-track { background: transparent; }
+.ov-reasons-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+.ov-reason-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+
+.ov-reason-row:hover {
+  background: var(--bg-card);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.ov-reason-rank {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-4);
+  width: 14px;
+  flex-shrink: 0;
+  text-align: right;
+  padding-top: 3px;
+  font-family: var(--font-mono);
+}
+
+.ov-reason-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ov-reason-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.ov-reason-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.ov-reason-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.ov-reason-pct {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-4);
+  flex-shrink: 0;
+  min-width: 26px;
+  text-align: right;
 }

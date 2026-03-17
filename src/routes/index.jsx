@@ -14,6 +14,7 @@ import PageOnboardingUsers from "../components/modals/OnboardingUsers";
 import PageStub from "../pages/Stub";
 import PagePasswordGenerator from "../pages/PasswordGenerator";
 import PagePartners from "../pages/Partners";
+import Trafficsources from "../pages/TrafficSources";
 
 const ALIASES = {
   "users-all": "users",
@@ -67,6 +68,7 @@ export default function PageRouter({
     sandbox: <PageStub title="Sandbox Environment" icon="🧪" />,
     "password-generator": <PagePasswordGenerator />,
     "ip-manager": <PageIPManager role={role} />,
+    "traffic-sources": <Trafficsources />,
   };
 
   return ROUTES[key] ?? <PageOverview role={role} setPage={setPage} />;

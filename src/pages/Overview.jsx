@@ -2,17 +2,19 @@ import { useState, useCallback, useMemo } from "react";
 import {
   LineChart,
   Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
   Brush,
 } from "recharts";
 
 import { Card, SectionTitle } from "../components/ui";
-import { ChartTooltip } from "../components/charts";
+import { ChartTooltip, BlockRadarChart } from "../components/charts";
 import { TransactionsModal } from "../components/modals";
-import { TaperedGauge, TinyDonut, BlockRadarChart } from "../components/charts";
 import { BLUE, GREEN, AMBER, SLATE } from "../components/constants/colors";
 import {
   BackArrowIcon,
@@ -25,6 +27,35 @@ import { histogramData } from "../data/charts";
 import { channelCards } from "../data/tables";
 import ServicesTrafficChart from "../components/charts/ServicesTrafficChart";
 import PartnersTrafficChart from "../components/charts/PartnersTrafficChart";
+
+// ── Inline donut — self-contained, no external dependency ─────────────────
+function DonutChart({ pct, color, size = 84 }) {
+  const r     = 30;
+  const sw    = 8;
+  const circ  = 2 * Math.PI * r;
+  const fill  = Math.min(pct / 100, 1) * circ;
+  const cx    = size / 2;
+  const cy    = size / 2;
+  return (
+    <svg width={size} height={size} style={{ display: "block", flexShrink: 0 }}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e8ecf3" strokeWidth={sw} />
+      <circle cx={cx} cy={cy} r={r} fill="none"
+        stroke={color} strokeWidth={sw}
+        strokeDasharray={`${fill} ${circ}`}
+        strokeDashoffset={circ / 4}
+        strokeLinecap="round"
+      />
+      <text x={cx} y={cy - 5} textAnchor="middle"
+        fontSize="14" fontWeight="800" fill={color} fontFamily="Nunito, sans-serif">
+        {pct}%
+      </text>
+      <text x={cx} y={cy + 11} textAnchor="middle"
+        fontSize="9" fontWeight="600" fill="#94a3b8" fontFamily="Nunito, sans-serif">
+        click rate
+      </text>
+    </svg>
+  );
+}
 
 const SERIES = [
   { key: "visits", color: GREEN },
@@ -99,6 +130,20 @@ const KPI_CARDS = [
     desc: "58.6K fewer total transactions than the previous period.",
     data: makeSparkData(32700, 4200, 60, -64.1),
   },
+];
+
+// ── Top 10 block reasons ───────────────────────────────────────────────────
+const TOP_BLOCK_REASONS = [
+  { code: "MCPS-2000",  label: "Shield Bypassing",   count: 378446, color: "#7c3aed" },
+  { code: "MCPS-1500",  label: "High Risk IP",        count: 302357, color: "#dc2626" },
+  { code: "MCPS-1400",  label: "Velocity Exceeded",   count: 226767, color: "#d97706" },
+  { code: "MCPS-1300",  label: "Invalid Fingerprint", count: 189034, color: "#2563eb" },
+  { code: "AMCPS-1310", label: "Anomalous Behaviour", count: 141779, color: "#0891b2" },
+  { code: "MCPS-1100",  label: "Bot Detected",        count: 113384, color: "#0891b2" },
+  { code: "AMCPS-2000", label: "Coordinated Attack",  count:  90692, color: "#059669" },
+  { code: "MCPS-0041",  label: "Failed Interaction",  count:  45346, color: "#059669" },
+  { code: "MCPS-1200",  label: "Geo Restriction",     count:  15115, color: "#9333ea" },
+  { code: "MCPS-1600",  label: "Device Mismatch",     count:   8865, color: "#e11d48" },
 ];
 
 const INFO_TIPS = {
@@ -438,34 +483,34 @@ export default function PageOverview({ service, setPage, role = "admin" }) {
             )}
           </SectionTitle>
           <div className="ov-radar-wrap">
-            <div className="ov-side-stats">
-              <div
-                className="stat-bg"
-                style={{ "--c": "#1d4ed8" }}
-                onClick={() => open("Overall Blocks — Transactions")}
-              >
-                <div className="ov-overall-label">Overall</div>
-                <div className="ov-overall-num">
-                  {Math.round(1511786 * filterScale).toLocaleString()}
-                </div>
-                <div className="ov-overall-link">View Transactions ↗</div>
-              </div>
-              {[
-                ["Apps", Math.round(226767 * filterScale), "#22c55e"],
-                ["Browsing", Math.round(226767 * filterScale), "#f59e0b"],
-                ["In-App", Math.round(189034 * filterScale), "#1d4ed8"],
-              ].map(([l, v, col]) => (
-                <div
-                  key={l}
-                  className="bl-stat"
-                  style={{ "--c": col }}
-                  onClick={() => open(`${l} — Transactions`)}
-                >
-                  <div className="ov-stat-label">{l}</div>
-                  <div className="ov-stat-num">{v.toLocaleString()}</div>
-                  <div className="ov-stat-link">View Transactions ↗</div>
-                </div>
-              ))}
+            <div className="ov-reasons-list">
+              {TOP_BLOCK_REASONS.map((r, i) => {
+                const total = Math.round(1511786 * filterScale);
+                const count = Math.round(r.count * filterScale);
+                const pct   = total ? Math.round(count / total * 100) : 0;
+                return (
+                  <div
+                    key={r.code}
+                    className="ov-reason-row"
+                    onClick={() => open(`${r.label} — Transactions`)}
+                  >
+                    <div className="ov-reason-rank">{i + 1}</div>
+                    <div className="ov-reason-body">
+                      <div className="ov-reason-top">
+                        <span className={`txn-reason-badge rsn-${r.code.toLowerCase().replace(/-/g, "")}`}>
+                          {r.code}
+                        </span>
+                        <span className="ov-reason-count">{count.toLocaleString()}</span>
+                        <span className="ov-reason-pct">{pct}%</span>
+                      </div>
+                      <div className="ov-reason-label">{r.label}</div>
+                      <div className="progress-track" style={{ marginTop: 4 }}>
+                        <div className="progress-bar" style={{ "--w": pct + "%", "--c": r.color }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             <div className="ov-radar-expand">
               <BlockRadarChart
@@ -482,9 +527,9 @@ export default function PageOverview({ service, setPage, role = "admin" }) {
         {/* Channel cards — 2×2 grid */}
         <div className="ov-channel-grid">
           {channelCards.map((c, i) => (
-            <Card key={i} className="ov-channel-card">
+            <Card key={i} className="ov-channel-card" style={{ "--c": c.color }}>
               <div
-                className="ov-channel-title dyn-border-bottom"
+                className="ov-channel-title"
                 style={{ "--c": c.color }}
                 onClick={() => open(`${c.name} — Transactions`)}
               >
@@ -498,7 +543,7 @@ export default function PageOverview({ service, setPage, role = "admin" }) {
                     onClick={() => open(`${c.name} Clicks — Transactions`)}
                   >
                     <div className="ov-metric-label">Clicks</div>
-                    <div className="ov-metric-num-clicks">
+                    <div className="ov-metric-num-clicks" style={{ "--c": c.color }}>
                       {Math.round(c.clicks * filterScale).toLocaleString()}
                     </div>
                     <div className="ov-metric-link">View Transactions ↗</div>
@@ -514,10 +559,12 @@ export default function PageOverview({ service, setPage, role = "admin" }) {
                     <div className="ov-metric-link">View Transactions ↗</div>
                   </div>
                 </div>
-                <TinyDonut
-                  pct={Math.round((c.clicks / c.visits) * 100)}
-                  color={c.color}
-                />
+                <div className="ov-channel-donut-wrap">
+                  <DonutChart
+                    pct={Math.round((c.clicks / c.visits) * 100)}
+                    color={c.color}
+                  />
+                </div>
               </div>
             </Card>
           ))}
