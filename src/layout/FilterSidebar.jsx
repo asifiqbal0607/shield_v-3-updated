@@ -61,8 +61,8 @@ export default function FilterSidebar({ role, setRole, setPage, onSearch }) {
         {/* ════ SEARCH SECTION ════ */}
         <div className="fsb-field">
           <label className="fsb-label-lg">Search</label>
-          <div className="fsb-search-wrap">
-            <span className="fsb-search-icon">
+          <div className="sidebar-search-wrap">
+            <span className="sidebar-search-icon">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"/>
@@ -74,17 +74,17 @@ export default function FilterSidebar({ role, setRole, setPage, onSearch }) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="UID, Transaction ID, IP, MSISDN…"
-              className="fsb-search-input"
+              placeholder="UNIQID, MSISDN, IP…"
+              className="sidebar-search-input"
               spellCheck={false}
               autoComplete="off"
             />
             {search && (
-              <button className="fsb-search-clear" onClick={() => setSearch("")}>✕</button>
+              <button className="sidebar-search-clear" onClick={() => setSearch("")}>✕</button>
             )}
           </div>
           <button
-            className={`fsb-search-apply-btn${search.trim() ? " fsb-search-apply-btn--active" : ""}`}
+            className={`sidebar-search-apply-btn${search.trim() ? " sidebar-search-apply-btn--active" : ""}`}
             onClick={handleSearchApply}
             disabled={!search.trim()}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
@@ -121,7 +121,15 @@ export default function FilterSidebar({ role, setRole, setPage, onSearch }) {
         <div className="fsb-field">
           <label className="fsb-label-lg">GEO</label>
           <div className="fsb-geo-chip">
-            <span className="fsb-geo-flag">🇿🇦</span>
+            <img
+              src="https://flagcdn.com/w20/za.png"
+              srcSet="https://flagcdn.com/w40/za.png 2x"
+              width="20"
+              height="15"
+              alt="ZA"
+              className="fsb-geo-flag"
+              style={{ borderRadius: 2, objectFit: 'cover' }}
+            />
             South Africa (ZA)
           </div>
         </div>

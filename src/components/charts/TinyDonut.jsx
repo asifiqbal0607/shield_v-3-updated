@@ -1,37 +1,50 @@
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { BLUE } from "../../components/constants/colors";
 
+const COLOR_CLICKS = "#7c3aed"; // purple — clicks (same across all cards)
+const COLOR_VISITS = "#06b6d4"; // cyan   — visits (same across all cards)
+
 /**
- * TinyDonut — a compact donut chart for channel cards.
- *
- * @param {number} pct    Filled percentage (0–100)
- * @param {string} color  Fill color for the active slice
+ * TinyDonut — two-color SVG donut comparing clicks vs visits.
+ * Both colors are fixed regardless of which card it appears in.
  */
-export default function TinyDonut({ pct = 25, color = BLUE }) {
-  const data = [{ v: pct }, { v: 100 - pct }];
+export default function TinyDonut({ clicks, visits, pct, color = BLUE }) {
+  const SIZE = 72;
+  const R    = 26;
+  const SW   = 11;
+  const CIRC = 2 * Math.PI * R;
+  const cx   = SIZE / 2;
+  const cy   = SIZE / 2;
+
+  const useComparison = clicks !== undefined && visits !== undefined;
+  const total  = useComparison ? clicks + visits : 100;
+  const aDash  = useComparison
+    ? (clicks / total) * CIRC
+    : ((pct ?? 25) / 100) * CIRC;
+  const bDash  = CIRC - aDash;
+
+  const fillA  = useComparison ? COLOR_CLICKS : color;
+  const fillB  = useComparison ? COLOR_VISITS : "#e8ecf3";
+  const label  = useComparison
+    ? `${Math.round((clicks / total) * 100)}%`
+    : `${pct ?? 25}%`;
 
   return (
-    <div className="tiny-donut-wrap" style={{ "--c": color }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="v"
-            cx="50%"
-            cy="50%"
-            innerRadius="60%"
-            outerRadius="90%"
-            startAngle={90}
-            endAngle={-270}
-            paddingAngle={2}
-            stroke="none"
-          >
-            <Cell fill={color} />
-            <Cell fill="#e8ecf3" />
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="tiny-donut-label">{pct}%</div>
+    <div className="tiny-donut-wrap">
+      <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} className="tiny-donut-svg">
+        {/* Full circle — visits (cyan) */}
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke={fillB} strokeWidth={SW} />
+        {/* Clicks arc — purple */}
+        <circle
+          cx={cx} cy={cy} r={R}
+          fill="none"
+          stroke={fillA}
+          strokeWidth={SW}
+          strokeDasharray={`${aDash} ${bDash}`}
+          strokeLinecap="butt"
+          transform={`rotate(-90 ${cx} ${cy})`}
+        />
+      </svg>
+      <div className="tiny-donut-label" style={{ "--c": fillA }}>{label}</div>
     </div>
   );
 }

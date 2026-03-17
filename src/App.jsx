@@ -20,6 +20,11 @@ export default function App() {
 
   const [page, setPage] = useState("overview");
 
+  const handleLoginAndRedirect = (role) => {
+    handleLogin(role);
+    setPage("overview");
+  };
+
   const handleNav = (newPage, newRole) => {
     if (newRole !== undefined) {
       handleSetRole(newRole);
@@ -30,7 +35,7 @@ export default function App() {
   };
 
   if (!auth)
-    return <Login onLogin={handleLogin} />;
+    return <Login onLogin={handleLoginAndRedirect} />;
 
   if (showLogout)
     return (

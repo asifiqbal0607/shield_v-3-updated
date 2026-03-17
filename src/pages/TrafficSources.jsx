@@ -47,7 +47,7 @@ const SOURCES = [
     domains:["google.com","googleadservices.com"],
   },
   {
-    id:"SRC-002", name:"Facebook",         icon:"F", color:"#1877f2",
+    id:"SRC-002", name:"Facebook",         icon:"F", color:"#18f2dc",
     identifier:"fbclid", identifierLabel:"fbclid param",
     visits:38600, clicks:32100, conversions:1621, convRate:5.7,
     revenue:"$58,400", revShare:24, avgSession:"2m 48s",
@@ -74,7 +74,7 @@ const SOURCES = [
     domains:["tiktok.com","vm.tiktok.com"],
   },
   {
-    id:"SRC-005", name:"X (Twitter)",      icon:"X", color:"#14171a",
+    id:"SRC-005", name:"X (Twitter)",      icon:"X", color:"#16b0f2",
     identifier:"twclid", identifierLabel:"twclid param",
     visits:10800, clicks:8200, conversions:281, convRate:3.8,
     revenue:"$9,600", revShare:4, avgSession:"1m 44s",
@@ -91,23 +91,14 @@ const SOURCES = [
     topCountry:"SA", topDevice:"Mobile",
     domains:["snapchat.com"],
   },
-  {
-    id:"SRC-010", name:"Direct / Unknown", icon:"D", color:VIOLET,
-    identifier:"no param", identifierLabel:"No identifier",
-    visits:9200, clicks:6700, conversions:321, convRate:4.8,
-    revenue:"$12,900", revShare:5, avgSession:"3m 08s",
-    bounce:34, status:"active", trend:"+3%", trendUp:true,
-    topCountry:"AE", topDevice:"Desktop",
-    domains:["--"],
-  },
 ];
 
 const SERIES = [
   { key:"google",    label:"Google",    color:"#4285f4" },
-  { key:"facebook",  label:"Facebook",  color:"#1877f2" },
+  { key:"facebook",  label:"Facebook",  color:"#18f2dc" },
   { key:"instagram", label:"Instagram", color:"#e1306c" },
   { key:"tiktok",    label:"TikTok",    color:"#ff0050" },
-  { key:"x",         label:"X",         color:"#14171a" },
+  { key:"x",         label:"X",         color:"#16b0f2" },
   { key:"snapchat",  label:"Snapchat",  color:"#f7c948" },
 ];
 
@@ -123,12 +114,13 @@ const CHART_TT   = { fontSize:11, borderRadius:8, border:"none", background:"#0f
 function SourceAvatar({ src, size }) {
   const s = size || 38;
   return (
-    <div style={{
-      width:s, height:s, borderRadius: Math.round(s * 0.28),
+    <div className="ts-src-avatar" style={{
+      width:s, height:s,
+      borderRadius: Math.round(s * 0.28),
       background: src.color + "18",
       border: "1.5px solid " + src.color + "35",
-      display:"flex", alignItems:"center", justifyContent:"center",
-      fontSize: Math.round(s * 0.38), fontWeight:800, color:src.color, flexShrink:0,
+      fontSize: Math.round(s * 0.38),
+      color: src.color,
     }}>
       {src.icon}
     </div>
@@ -137,14 +129,7 @@ function SourceAvatar({ src, size }) {
 
 function TrendBadge({ trend, trendUp }) {
   return (
-    <span style={{
-      display:"inline-flex", alignItems:"center", gap:3,
-      fontSize:11, fontWeight:700,
-      color: trendUp ? "#16a34a" : "#dc2626",
-      background: trendUp ? "#f0fdf4" : "#fef2f2",
-      border: "1px solid " + (trendUp ? "#bbf7d0" : "#fecaca"),
-      padding:"2px 8px", borderRadius:20, whiteSpace:"nowrap",
-    }}>
+    <span className={`ts-trend-badge ${trendUp ? "ts-trend-badge-up" : "ts-trend-badge-dn"}`}>
       {trendUp ? "+" : ""}{trend}
     </span>
   );
@@ -152,52 +137,36 @@ function TrendBadge({ trend, trendUp }) {
 
 function MiniBar({ value, max, color }) {
   return (
-    <div style={{ height:3, background:"#f1f5f9", borderRadius:99, overflow:"hidden", flex:1 }}>
-      <div style={{
-        height:"100%", width: Math.min((value / max) * 100, 100) + "%",
-        background: color, borderRadius:99,
+    <div className="ts-mini-bar-track">
+      <div className="ts-mini-bar-fill" style={{
+        width: Math.min((value / max) * 100, 100) + "%",
+        background: color,
       }} />
     </div>
   );
 }
 
 function IdTag({ value }) {
-  return (
-    <span style={{
-      fontSize:10, fontFamily:"monospace", fontWeight:600,
-      color:"#0891b2", background:"#e0f2fe",
-      padding:"2px 7px", borderRadius:4, whiteSpace:"nowrap",
-    }}>{value}</span>
-  );
+  return <span className="ts-id-tag">{value}</span>;
 }
 
 function BarChartTooltip({ active, payload }) {
   if (!active || !payload || !payload.length) return null;
   const src = payload[0].payload;
   return (
-    <div style={{
-      background:"#0f172a", borderRadius:10, padding:"12px 16px",
-      border:"1px solid #1e293b", minWidth:170,
-      boxShadow:"0 8px 32px rgba(0,0,0,.4)",
-    }}>
-      <div style={{
-        display:"flex", alignItems:"center", gap:8,
-        marginBottom:10, paddingBottom:8, borderBottom:"1px solid #1e293b",
-      }}>
-        <div style={{ width:10, height:10, borderRadius:3, background:src.color }} />
-        <span style={{ fontSize:13, fontWeight:700, color:"#f1f5f9" }}>{src.name}</span>
+    <div className="ts-bar-tt-box">
+      <div className="ts-bar-tt-hd">
+        <div className="ts-bar-tt-dot" style={{ background:src.color }} />
+        <span className="ts-bar-tt-name">{src.name}</span>
       </div>
       {[
         { label:"Visits",     value: src.visits.toLocaleString(),  color:"#4ade80" },
         { label:"Clicks",     value: src.clicks.toLocaleString(),  color: src.color },
         { label:"Conv. Rate", value: src.convRate + "%",            color:"#fbbf24" },
       ].map((r) => (
-        <div key={r.label} style={{
-          display:"flex", justifyContent:"space-between", alignItems:"center",
-          gap:20, marginBottom:4,
-        }}>
-          <span style={{ fontSize:11, color:"#94a3b8" }}>{r.label}</span>
-          <span style={{ fontSize:12, fontWeight:700, color:r.color }}>{r.value}</span>
+        <div key={r.label} className="ts-bar-tt-row">
+          <span className="ts-bar-tt-lbl">{r.label}</span>
+          <span className="ts-bar-tt-val" style={{ color:r.color }}>{r.value}</span>
         </div>
       ))}
     </div>
@@ -209,7 +178,7 @@ function SourceModal({ source, onClose }) {
   const st = STATUS_STYLE[source.status] || STATUS_STYLE.active;
   return (
     <div className="partner-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="partner-box" style={{ maxWidth:520 }}>
+      <div className="partner-box ts-modal-box">
         <div className="partner-modal-header" style={{
           background:"linear-gradient(135deg, #0a1628 0%, " + source.color + "44 100%)",
         }}>
@@ -223,19 +192,16 @@ function SourceModal({ source, onClose }) {
           <button className="partner-modal-close" onClick={onClose}>x</button>
         </div>
         <div className="p-section">
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:20 }}>
+          <div className="ts-modal-kpi-grid">
             {[
               { label:"Visits",      value: source.visits.toLocaleString(),      color:"#16a34a" },
               { label:"Clicks",      value: source.clicks.toLocaleString(),      color: source.color },
               { label:"Conversions", value: source.conversions.toLocaleString(), color: AMBER },
               { label:"Conv. Rate",  value: source.convRate + "%",               color: VIOLET },
             ].map((k) => (
-              <div key={k.label} style={{
-                textAlign:"center", padding:"12px 8px",
-                background:"#f8fafc", borderRadius:10, border:"1px solid #e8ecf3",
-              }}>
-                <div style={{ fontSize:18, fontWeight:800, color:k.color, lineHeight:1.1 }}>{k.value}</div>
-                <div style={{ fontSize:10, color:"#94a3b8", marginTop:3, fontWeight:600 }}>{k.label}</div>
+              <div key={k.label} className="ts-modal-kpi-cell">
+                <div className="ts-modal-kpi-val" style={{ color:k.color }}>{k.value}</div>
+                <div className="ts-modal-kpi-lbl">{k.label}</div>
               </div>
             ))}
           </div>
@@ -252,11 +218,8 @@ function SourceModal({ source, onClose }) {
             ["Status",         source.status],
             ["Trend",          source.trend],
           ].map(([label, value]) => (
-            <div key={label} style={{
-              display:"flex", justifyContent:"space-between", alignItems:"center",
-              padding:"9px 0", borderBottom:"1px solid #f1f5f9",
-            }}>
-              <span style={{ fontSize:12, color:"#64748b", fontWeight:600 }}>{label}</span>
+            <div key={label} className="ts-modal-detail-row">
+              <span className="ts-modal-detail-lbl">{label}</span>
               {label === "Status" ? (
                 <span className="partner-status-badge" style={{ "--bg":st.bg, "--c":st.c }}>{value}</span>
               ) : label === "Trend" ? (
@@ -264,7 +227,7 @@ function SourceModal({ source, onClose }) {
               ) : (label === "Identified By" || label === "Identifier") ? (
                 <IdTag value={value} />
               ) : (
-                <span style={{ fontSize:12, fontWeight:600, color:"#0f172a" }}>{value}</span>
+                <span className="ts-modal-detail-val">{value}</span>
               )}
             </div>
           ))}
@@ -320,43 +283,28 @@ export default function Trafficsources() {
   return (
     <div>
       {/* Page Header */}
-      <div style={{ marginBottom:20 }}>
-        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", flexWrap:"wrap", gap:12 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-            <div style={{
-              width:46, height:46, borderRadius:12, flexShrink:0,
-              background:"linear-gradient(135deg, #0a1628, #1e3a5f)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              boxShadow:"0 4px 14px rgba(10,22,40,.25)",
-            }}>
+      <div className="ts-page-header">
+        <div className="ts-page-hd-row">
+          <div className="ts-page-icon-wrap">
+            <div className="ts-page-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
               </svg>
             </div>
             <div>
-              <h1 style={{ fontSize:20, fontWeight:800, color:"var(--text)", letterSpacing:"-0.4px", margin:0 }}>
-                Traffic Sources
-              </h1>
-              <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:3, fontSize:12,
-                color:"var(--text-3)", fontWeight:500 }}>
+              <h1 className="ts-page-title">Traffic Sources</h1>
+              <div className="ts-page-meta">
                 <span>{SOURCES.length} sources</span>
-                <span style={{ color:"var(--border2)" }}>·</span>
-                <span style={{ color:"#16a34a", fontWeight:600 }}>{SOURCES.filter((r) => r.status === "active").length} active</span>
-                <span style={{ color:"var(--border2)" }}>·</span>
+                <span className="ts-page-meta-sep">·</span>
+                <span className="ts-page-meta-active">{SOURCES.filter((r) => r.status === "active").length} active</span>
+                <span className="ts-page-meta-sep">·</span>
                 <span>{totalClicks.toLocaleString()} total clicks</span>
               </div>
             </div>
           </div>
-          <div style={{
-            display:"flex", alignItems:"center", gap:6,
-            padding:"7px 14px", borderRadius:8,
-            background:"#eff6ff", border:"1px solid #bfdbfe",
-            fontSize:11, color:"#1d4ed8", fontWeight:600,
-          }}>
+          <div className="ts-info-badge">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
             Identified via gclid / fbclid / ttclid / twclid / ScCid
           </div>
@@ -364,73 +312,41 @@ export default function Trafficsources() {
       </div>
 
       {/* Tab strip */}
-      <div style={{
-        display:"flex", background:"var(--bg-card)",
-        borderRadius:"14px 14px 0 0",
-        border:"1px solid var(--border)", borderBottom:"none",
-        padding:"0 18px",
-      }}>
+      <div className="ts-tab-strip">
         {TABS.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
+            className="ts-tab-btn"
             style={{
-              display:"flex", alignItems:"center", gap:8,
-              padding:"13px 18px", fontSize:12,
               fontWeight: tab === t.key ? 700 : 600,
               color: tab === t.key ? t.color : "var(--text-3)",
-              border:"none", background:"none",
-              borderBottom: tab === t.key
-                ? "2.5px solid " + t.color
-                : "2.5px solid transparent",
-              marginBottom:"-1px", cursor:"pointer",
-              transition:"all .15s", whiteSpace:"nowrap", fontFamily:"inherit",
+              borderBottom: tab === t.key ? "2.5px solid " + t.color : "2.5px solid transparent",
             }}>
-            <span style={{
-              width:7, height:7, borderRadius:"50%", flexShrink:0,
+            <span className="ts-tab-pip" style={{
               background: tab === t.key ? t.color : "#cbd5e1",
-              transition:"background .15s",
             }} />
             {t.label}
           </button>
         ))}
       </div>
 
-      <div style={{
-        background:"var(--bg-card)",
-        border:"1px solid var(--border)",
-        borderRadius:"0 0 14px 14px",
-        padding:22,
-      }}>
+      <div className="ts-tab-body">
 
         {/* OVERVIEW */}
         {tab === "overview" && (
           <div>
-            {/* KPI cards */}
             <div className="g-stats4 mb-section">
               {KPI.map((k) => (
-                <div key={k.label} style={{
-                  background:"var(--bg-card)", borderRadius:12,
-                  border:"1px solid var(--border)",
-                  borderTop:"3px solid " + k.color,
-                  padding:"18px 20px",
-                  boxShadow:"0 1px 6px rgba(0,0,0,.05)",
-                }}>
-                  <div style={{ fontSize:28, fontWeight:800, color:k.color,
-                    lineHeight:1, letterSpacing:"-1px" }}>{k.value}</div>
-                  <div style={{ fontSize:12, color:"var(--text-2)", fontWeight:600, marginTop:6 }}>{k.label}</div>
-                  <div style={{ fontSize:11, color:"var(--text-4)", marginTop:2 }}>{k.sub}</div>
+                <div key={k.label} className="ts-kpi-card" style={{ borderTop: "3px solid " + k.color }}>
+                  <div className="ts-kpi-val" style={{ color: k.color }}>{k.value}</div>
+                  <div className="ts-kpi-lbl">{k.label}</div>
+                  <div className="ts-kpi-sub">{k.sub}</div>
                 </div>
               ))}
             </div>
 
-            {/* Charts */}
             <div className="g-split2 mb-section">
-              <div style={{
-                background:"var(--bg-card)", borderRadius:12,
-                border:"1px solid var(--border)", padding:"18px 20px",
-              }}>
-                <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:16 }}>
-                  Clicks by Source
-                </div>
+              <div className="ts-chart-card">
+                <div className="ts-chart-title">Clicks by Source</div>
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={SOURCES} margin={{ top:4, right:8, bottom:0, left:-10 }}>
                     <XAxis dataKey="name" tick={{ ...CHART_TICK, fontSize:9 }} axisLine={false} tickLine={false}
@@ -445,14 +361,9 @@ export default function Trafficsources() {
                 </ResponsiveContainer>
               </div>
 
-              <div style={{
-                background:"var(--bg-card)", borderRadius:12,
-                border:"1px solid var(--border)", padding:"18px 20px",
-              }}>
-                <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:16 }}>
-                  Revenue Share
-                </div>
-                <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+              <div className="ts-chart-card">
+                <div className="ts-chart-title">Revenue Share</div>
+                <div className="ts-rev-share-wrap">
                   <ResponsiveContainer width={130} height={130}>
                     <PieChart>
                       <Pie data={SOURCES} cx="50%" cy="50%" innerRadius={36} outerRadius={60}
@@ -462,16 +373,12 @@ export default function Trafficsources() {
                       <Tooltip contentStyle={CHART_TT} formatter={(v) => [v + "%", "Share"]} />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div style={{ flex:1, display:"flex", flexDirection:"column", gap:7 }}>
+                  <div className="ts-rev-legend">
                     {SOURCES.map((s) => (
-                      <div key={s.id} style={{ display:"flex", alignItems:"center", gap:7 }}>
-                        <span style={{ width:8, height:8, borderRadius:2, background:s.color,
-                          flexShrink:0, display:"inline-block" }} />
-                        <span style={{ flex:1, fontSize:11, color:"var(--text-2)", fontWeight:500,
-                          whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
-                          {s.name.split(" ")[0]}
-                        </span>
-                        <span style={{ fontSize:11, fontWeight:700, color:"var(--text)" }}>{s.revShare}%</span>
+                      <div key={s.id} className="ts-rev-legend-item">
+                        <span className="ts-rev-legend-dot" style={{ background: s.color }} />
+                        <span className="ts-rev-legend-name">{s.name.split(" ")[0]}</span>
+                        <span className="ts-rev-legend-pct">{s.revShare}%</span>
                       </div>
                     ))}
                   </div>
@@ -479,23 +386,21 @@ export default function Trafficsources() {
               </div>
             </div>
 
-            {/* Source cards - original grid layout */}
             <div className="g-auto-md">
               {SOURCES.map((src) => {
                 const st = STATUS_STYLE[src.status] || STATUS_STYLE.active;
                 return (
-                  <div key={src.id} className="card"
-                    style={{ cursor:"pointer", transition:"box-shadow .15s" }}
+                  <div key={src.id} className="card ts-src-card"
                     onClick={() => setSelected(src)}
                     onMouseEnter={(e) => e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,.12)"}
                     onMouseLeave={(e) => e.currentTarget.style.boxShadow = ""}
                   >
-                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <div className="ts-src-hd">
+                      <div className="ts-src-avatar-wrap">
                         <SourceAvatar src={src} size={38} />
                         <div>
-                          <div style={{ fontSize:13, fontWeight:700, color:"var(--text)" }}>{src.name}</div>
-                          <div style={{ fontSize:10, color:"var(--text-4)", marginTop:1 }}>{src.id}</div>
+                          <div className="ts-src-name">{src.name}</div>
+                          <div className="ts-src-id">{src.id}</div>
                         </div>
                       </div>
                       <span className="partner-status-badge" style={{ "--bg":st.bg, "--c":st.c }}>
@@ -503,33 +408,29 @@ export default function Trafficsources() {
                       </span>
                     </div>
 
-                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:12 }}>
+                    <div className="ts-src-kpi-grid">
                       {[
                         { label:"Clicks",    value: src.clicks.toLocaleString() },
                         { label:"Conv. %",   value: src.convRate + "%" },
                         { label:"Revenue",   value: src.revenue },
                         { label:"Bounce",    value: src.bounce + "%" },
                       ].map((k) => (
-                        <div key={k.label} style={{
-                          background:"var(--bg-subtle)", borderRadius:7,
-                          padding:"7px 10px", border:"1px solid var(--border)",
-                        }}>
-                          <div style={{ fontSize:12, fontWeight:700, color:"var(--text)" }}>{k.value}</div>
-                          <div style={{ fontSize:10, color:"var(--text-4)", marginTop:1 }}>{k.label}</div>
+                        <div key={k.label} className="ts-src-kpi-cell">
+                          <div className="ts-src-kpi-val">{k.value}</div>
+                          <div className="ts-src-kpi-lbl">{k.label}</div>
                         </div>
                       ))}
                     </div>
 
-                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
-                      <span style={{ fontSize:10, color:"var(--text-4)" }}>Revenue share</span>
-                      <span style={{ fontSize:11, fontWeight:700, color:src.color }}>{src.revShare}%</span>
+                    <div className="ts-revshare-row">
+                      <span className="ts-revshare-lbl">Revenue share</span>
+                      <span className="ts-src-kpi-val" style={{ color: src.color }}>{src.revShare}%</span>
                     </div>
-                    <div style={{ height:4, background:"var(--border)", borderRadius:99, overflow:"hidden" }}>
-                      <div style={{ height:"100%", width: src.revShare + "%", background:src.color, borderRadius:99 }} />
+                    <div className="ts-revshare-track">
+                      <div className="ts-revshare-fill" style={{ width: src.revShare + "%", background: src.color }} />
                     </div>
 
-                    <div style={{ marginTop:10, fontSize:11, fontWeight:700,
-                      color: src.trendUp ? "#16a34a" : "#dc2626" }}>
+                    <div className="ts-src-trend" style={{ color: src.trendUp ? "#16a34a" : "#dc2626" }}>
                       {src.trendUp ? "+" : ""}{src.trend} vs last period
                     </div>
                   </div>
@@ -542,33 +443,25 @@ export default function Trafficsources() {
         {/* TRENDS */}
         {tab === "trends" && (
           <div>
-            <div style={{ display:"flex", gap:8, marginBottom:20, flexWrap:"wrap" }}>
+            <div className="ts-trends-btn-row">
               {SERIES.map((s) => (
                 <button key={s.key} onClick={() => toggleSeries(s.key)}
+                  className="ts-trends-series-btn"
                   style={{
-                    display:"flex", alignItems:"center", gap:7,
-                    padding:"6px 14px", borderRadius:20,
-                    border:"1.5px solid " + (series[s.key] ? s.color : "var(--border)"),
+                    border: "1.5px solid " + (series[s.key] ? s.color : "var(--border)"),
                     background: series[s.key] ? s.color + "12" : "var(--bg-subtle)",
                     color: series[s.key] ? s.color : "var(--text-4)",
-                    fontSize:11, fontWeight:700, cursor:"pointer",
-                    fontFamily:"inherit", transition:"all .15s",
                   }}>
-                  <span style={{
-                    width:7, height:7, borderRadius:"50%",
+                  <span className="ts-trends-pip" style={{
                     background: series[s.key] ? s.color : "#cbd5e1",
-                    flexShrink:0, display:"inline-block",
                   }} />
                   {s.label}
                 </button>
               ))}
             </div>
 
-            <div style={{ background:"var(--bg-card)", borderRadius:12,
-              border:"1px solid var(--border)", padding:"18px 20px", marginBottom:16 }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:16 }}>
-                Click Volume by Source
-              </div>
+            <div className="ts-trends-chart-card">
+              <div className="ts-chart-title">Click Volume by Source</div>
               <ResponsiveContainer width="100%" height={260}>
                 <AreaChart data={TREND_DATA} margin={{ top:4, right:8, bottom:0, left:-10 }}>
                   <defs>
@@ -583,7 +476,7 @@ export default function Trafficsources() {
                   <YAxis tick={CHART_TICK} axisLine={false} tickLine={false}
                     tickFormatter={(v) => (v / 1000).toFixed(0) + "k"} />
                   <Tooltip contentStyle={CHART_TT}
-                    formatter={(v, name) => [v.toLocaleString(), SERIES.find((s) => s.key === name) && SERIES.find((s) => s.key === name).label || name]} />
+                    formatter={(v, name) => [v.toLocaleString(), SERIES.find((s) => s.key === name)?.label || name]} />
                   {SERIES.map((s) => series[s.key] && (
                     <Area key={s.key} type="monotone" dataKey={s.key}
                       stroke={s.color} strokeWidth={2}
@@ -594,14 +487,9 @@ export default function Trafficsources() {
               </ResponsiveContainer>
             </div>
 
-            <div style={{ background:"var(--bg-card)", borderRadius:12,
-              border:"1px solid var(--border)", padding:"18px 20px" }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"var(--text)", marginBottom:4 }}>
-                Conversion Rate Trend
-              </div>
-              <div style={{ fontSize:11, color:"var(--text-4)", marginBottom:16 }}>
-                % of visits that triggered the Block API (subscribe click)
-              </div>
+            <div className="ts-trends-conv-card">
+              <div className="ts-chart-title">Conversion Rate Trend</div>
+              <div className="ts-trends-conv-sub">% of visits that triggered the Block API (subscribe click)</div>
               <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={CONV_DATA} margin={{ top:4, right:8, bottom:0, left:-10 }}>
                   <defs>
@@ -616,7 +504,7 @@ export default function Trafficsources() {
                   <YAxis tick={CHART_TICK} axisLine={false} tickLine={false}
                     tickFormatter={(v) => v + "%"} />
                   <Tooltip contentStyle={CHART_TT}
-                    formatter={(v, name) => [v + "%", SERIES.find((s) => s.key === name) && SERIES.find((s) => s.key === name).label || name]} />
+                    formatter={(v, name) => [v + "%", SERIES.find((s) => s.key === name)?.label || name]} />
                   {SERIES.map((s) => series[s.key] && (
                     <Area key={s.key} type="monotone" dataKey={s.key}
                       stroke={s.color} strokeWidth={2}
@@ -634,21 +522,15 @@ export default function Trafficsources() {
           <div>
             <div className="g-stats4 mb-section">
               {KPI.map((k) => (
-                <div key={k.label} style={{
-                  background:"var(--bg-card)", borderRadius:12,
-                  border:"1px solid var(--border)", padding:"16px 18px",
-                  borderTop:"3px solid " + k.color,
-                }}>
-                  <div style={{ fontSize:26, fontWeight:800, color:k.color,
-                    lineHeight:1, letterSpacing:"-1px" }}>{k.value}</div>
-                  <div style={{ fontSize:12, color:"var(--text-2)", fontWeight:600, marginTop:5 }}>{k.label}</div>
+                <div key={k.label} className="ts-kpi-card" style={{ borderTop: "3px solid " + k.color }}>
+                  <div className="ts-kpi-val" style={{ color: k.color }}>{k.value}</div>
+                  <div className="ts-kpi-lbl">{k.label}</div>
                 </div>
               ))}
             </div>
 
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
-              flexWrap:"wrap", gap:12, marginBottom:12 }}>
-              <div style={{ fontSize:13, fontWeight:700, color:"var(--text)" }}>All Traffic Sources</div>
+            <div className="ts-src-tbl-header">
+              <div className="ts-src-tbl-title">All Traffic Sources</div>
               <div className="f-wrap-10">
                 <div className="dt-entries-bar">
                   <span className="dt-entries-lbl">Show</span>
@@ -682,10 +564,10 @@ export default function Trafficsources() {
               </div>
             </div>
 
-            <div style={{ border:"1px solid var(--border)", borderRadius:12, overflow:"hidden" }}>
-              <table className="dt" style={{ tableLayout:"auto" }}>
+            <div className="ts-tbl-wrap">
+              <table className="dt">
                 <thead>
-                  <tr style={{ background:"var(--bg-subtle)", borderBottom:"2px solid var(--border)" }}>
+                  <tr className="ts-tbl-hd">
                     {["Source","Identifier","Visits","Clicks","Conv. Rate","Revenue","Rev. Share","Trend",""].map((h) => (
                       <th key={h} className="dt-th">{h}</th>
                     ))}
@@ -706,40 +588,30 @@ export default function Trafficsources() {
                           </div>
                         </td>
                         <td className="p-sm"><IdTag value={src.identifier} /></td>
-                        <td style={{ padding:"8px 10px", fontWeight:700, color:"#16a34a", fontSize:12 }}>
-                          {src.visits.toLocaleString()}
-                        </td>
+                        <td className="ts-tbl-visits">{src.visits.toLocaleString()}</td>
                         <td className="p-sm">
-                          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                          <div className="ts-tbl-clicks-row">
                             <MiniBar value={src.clicks} max={maxClicks} color={src.color} />
-                            <span style={{ fontSize:12, fontWeight:700, color:src.color, minWidth:38, textAlign:"right" }}>
+                            <span className="ts-tbl-clicks-val" style={{ color: src.color }}>
                               {src.clicks.toLocaleString()}
                             </span>
                           </div>
                         </td>
                         <td className="p-sm">
-                          <div style={{ display:"flex", alignItems:"center", gap:5 }}>
-                            <div style={{ flex:1, height:4, background:"var(--border)", borderRadius:99, overflow:"hidden" }}>
-                              <div style={{ height:"100%", width: Math.min(src.convRate * 8, 100) + "%",
-                                background: AMBER, borderRadius:99 }} />
+                          <div className="ts-tbl-conv-row">
+                            <div className="ts-tbl-conv-track">
+                              <div className="ts-tbl-conv-fill" style={{ width: Math.min(src.convRate * 8, 100) + "%" }} />
                             </div>
-                            <span style={{ fontSize:11, fontWeight:700, color: AMBER, minWidth:34 }}>
-                              {src.convRate}%
-                            </span>
+                            <span className="ts-tbl-conv-val">{src.convRate}%</span>
                           </div>
                         </td>
-                        <td style={{ padding:"8px 10px", fontSize:12, fontWeight:700, color:"var(--text)" }}>
-                          {src.revenue}
-                        </td>
+                        <td className="ts-tbl-revenue">{src.revenue}</td>
                         <td className="p-sm">
-                          <div style={{ display:"flex", alignItems:"center", gap:5 }}>
-                            <div style={{ flex:1, height:4, background:"var(--border)", borderRadius:99, overflow:"hidden" }}>
-                              <div style={{ height:"100%", width: src.revShare + "%",
-                                background: src.color, borderRadius:99 }} />
+                          <div className="ts-tbl-revshare-row">
+                            <div className="ts-tbl-revshare-track">
+                              <div className="ts-tbl-revshare-fill" style={{ width: src.revShare + "%", background: src.color }} />
                             </div>
-                            <span style={{ fontSize:11, fontWeight:700, color:"var(--text)", minWidth:26 }}>
-                              {src.revShare}%
-                            </span>
+                            <span className="ts-tbl-revshare-val">{src.revShare}%</span>
                           </div>
                         </td>
                         <td className="p-sm"><TrendBadge trend={src.trend} trendUp={src.trendUp} /></td>

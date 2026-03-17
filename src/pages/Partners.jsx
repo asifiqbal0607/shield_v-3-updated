@@ -288,21 +288,19 @@ function AddPartnerModal({ onClose, onAdd }) {
               {f:"revenue",l:"Revenue",      t:"text",  ph:"e.g. KES 3,400,000",  req:false},
             ].map(({f,l,t,ph,req})=>(
               <div key={f}>
-                <label className="form-label">{l}{req&&<span style={{color:"var(--color-danger)"}}> *</span>}</label>
-                <input className="form-input" type={t} placeholder={ph} value={form[f]}
-                  onChange={(e)=>set(f,e.target.value)}
-                  style={errors[f]?{borderColor:"var(--color-danger)"}:{}} />
-                {errors[f]&&<div style={{fontSize:10,color:"var(--color-danger)",marginTop:3}}>{errors[f]}</div>}
+                <label className="form-label">{l}{req&&<span className="txt-required"> *</span>}</label>
+                <input className={errors[f] ? "form-input form-input-error" : "form-input"} type={t} placeholder={ph} value={form[f]}
+                  onChange={(e)=>set(f,e.target.value)} />
+                {errors[f]&&<div className="form-error-msg">{errors[f]}</div>}
               </div>
             ))}
             <div>
-              <label className="form-label">Country <span style={{color:"var(--color-danger)"}}>*</span></label>
-              <select className="form-input" value={form.country} onChange={(e)=>set("country",e.target.value)}
-                style={errors.country?{borderColor:"var(--color-danger)"}:{}}>
+              <label className="form-label">Country <span className="txt-required">*</span></label>
+              <select className={errors.country ? "form-input form-input-error" : "form-input"} value={form.country} onChange={(e)=>set("country",e.target.value)}>
                 <option value="">Select country…</option>
                 {COUNTRIES.map((c)=><option key={c.code} value={c.code}>{FLAG[c.code]??""} {c.name}</option>)}
               </select>
-              {errors.country&&<div style={{fontSize:10,color:"var(--color-danger)",marginTop:3}}>{errors.country}</div>}
+              {errors.country&&<div className="form-error-msg">{errors.country}</div>}
             </div>
           </div>
 

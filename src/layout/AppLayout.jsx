@@ -49,7 +49,7 @@ export default function AppLayout({
         <div
           className="app-drawer"
           style={{
-            "--drawer-tx": sidebarOpen ? "translateX(0)" : "translateX(-260px)",
+            "--drawer-tx": sidebarOpen ? "translateX(0)" : "translateX(-320px)",
             "--drawer-shadow": sidebarOpen ? "var(--shadow-md)" : "none",
           }}
         >
@@ -66,8 +66,14 @@ export default function AppLayout({
           </button>
         )}
 
-        {/* Main content — uses .page-main for responsive padding */}
-        <main className="page-main">
+        {/* Main content — shifts right when sidebar is open */}
+        <main
+          className="page-main"
+          style={{
+            marginLeft: sidebarOpen ? "280px" : "0",
+            transition: "margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        >
           {/* Breadcrumb + filter toggle */}
           <div className="app-breadcrumb-row">
             <div className="app-breadcrumb-left">
