@@ -342,10 +342,10 @@ function NodeCard({ node, isDragging, onDragStart }) {
 
 /* ── Hierarchy: Aggregator Lane ─────────────────────────────────────────── */
 function AggLane({ agg, children, onDrop, onDragOver, draggingId }) {
-  // FIX 1: Start expanded=true so all CSPs are visible by default
-  const [expanded, setExpanded] = useState(true);
-  const shown = expanded ? children : children.slice(0,4);
-  const extra = children.length - 4;
+  // Start collapsed — show first 5, expand on click
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? children : children.slice(0, 5);
+  const extra = children.length - 5;
   const av    = avColors(agg.name);
 
   return (

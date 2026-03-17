@@ -18,64 +18,7 @@ const FILTER_DATA = {
   "Custom Variables":         ["Variable 1", "Variable 2", "Variable 3"],
 };
 
-// ── Search field config ───────────────────────────────────────────────────────
-const SEARCH_FIELDS = [
-  {
-    key:         "uniqueId",
-    label:       "Unique ID",
-    placeholder: "e.g. UID-00123456",
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-        <path d="M16 12h.01"/>
-      </svg>
-    ),
-  },
-  {
-    key:         "txnId",
-    label:       "Transaction ID",
-    placeholder: "e.g. TXN-9a3f…",
-    mono:        true,
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="17 1 21 5 17 9"/>
-        <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-        <polyline points="7 23 3 19 7 15"/>
-        <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-      </svg>
-    ),
-  },
-  {
-    key:         "ip",
-    label:       "IP Address",
-    placeholder: "e.g. 192.168.1.1",
-    mono:        true,
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <line x1="2" y1="12" x2="22" y2="12"/>
-        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-      </svg>
-    ),
-  },
-  {
-    key:         "msisdn",
-    label:       "MSISDN",
-    placeholder: "e.g. +27821234567",
-    mono:        true,
-    icon: (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-        <line x1="12" y1="18" x2="12.01" y2="18"/>
-      </svg>
-    ),
-  },
-];
-
+// ── Filter data ──────────────────────────────────────────────────────────────
 function SelectFilter({ label }) {
   return (
     <div className="fsb-field">
@@ -93,23 +36,14 @@ function SelectFilter({ label }) {
 export default function FilterSidebar({ role, setRole, setPage, onSearch }) {
   const [fromDate, setFromDate] = useState("2024-09-01");
   const [toDate,   setToDate]   = useState("2024-09-26");
-
-  const [search, setSearch] = useState({
-    uniqueId: "", txnId: "", ip: "", msisdn: "",
-  });
-
-  const hasSearch = Object.values(search).some((v) => v.trim() !== "");
-
-  function handleSearchChange(key, val) {
-    setSearch((prev) => ({ ...prev, [key]: val }));
-  }
-
-  function handleSearchClear() {
-    setSearch({ uniqueId: "", txnId: "", ip: "", msisdn: "" });
-  }
+  const [search,   setSearch]   = useState("");
 
   function handleSearchApply() {
-    if (onSearch) onSearch(search);
+    if (onSearch) onSearch(search.trim());
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === "Enter") handleSearchApply();
   }
 
   return (
@@ -125,56 +59,34 @@ export default function FilterSidebar({ role, setRole, setPage, onSearch }) {
       <div className="fsb-body">
 
         {/* ════ SEARCH SECTION ════ */}
-        <div className="fsb-search-section">
-
-          {/* Section heading with clear button */}
-          <div className="fsb-search-hd">
-            <div className="fsb-search-hd-left">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+        <div className="fsb-field">
+          <label className="fsb-label-lg">Search</label>
+          <div className="fsb-search-wrap">
+            <span className="fsb-search-icon">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8"/>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
-              Search
-            </div>
-            {hasSearch && (
-              <button className="fsb-search-clear-all" onClick={handleSearchClear}>
-                Clear all
-              </button>
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="UID, Transaction ID, IP, MSISDN…"
+              className="fsb-search-input"
+              spellCheck={false}
+              autoComplete="off"
+            />
+            {search && (
+              <button className="fsb-search-clear" onClick={() => setSearch("")}>✕</button>
             )}
           </div>
-
-          {/* 4 search inputs */}
-          {SEARCH_FIELDS.map((f) => (
-            <div key={f.key} className="fsb-search-field">
-              <label className="fsb-label">{f.label}</label>
-              <div className="fsb-search-input-wrap">
-                <span className="fsb-search-field-icon">{f.icon}</span>
-                <input
-                  type="text"
-                  value={search[f.key]}
-                  onChange={(e) => handleSearchChange(f.key, e.target.value)}
-                  placeholder={f.placeholder}
-                  className={`fsb-input fsb-search-input-field${f.mono ? " fsb-search-mono" : ""}`}
-                  spellCheck={false}
-                  autoComplete="off"
-                />
-                {search[f.key] && (
-                  <button
-                    className="fsb-search-field-clear"
-                    onClick={() => handleSearchChange(f.key, "")}>
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-
-          {/* Search action button */}
           <button
-            className={`fsb-search-apply-btn${hasSearch ? " fsb-search-apply-btn--active" : ""}`}
+            className={`fsb-search-apply-btn${search.trim() ? " fsb-search-apply-btn--active" : ""}`}
             onClick={handleSearchApply}
-            disabled={!hasSearch}>
+            disabled={!search.trim()}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/>
