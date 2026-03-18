@@ -224,15 +224,13 @@ export default function PageAPKs({ role = "admin" }) {
           serviceFilter={serviceFilter}
         />
       </div>
-      <div className="mb-18">
+      <div className="g-halves mb-18">
         <ApkPieCard
-          title="Specified APKs"
+          title="Spoofed APKs"
           data={spoofedApkData}
           onSliceClick={(n) => open(`${n} — Transactions`)}
           serviceFilter={serviceFilter}
         />
-      </div>
-      <div className="mb-18">
         <ApkPieCard
           title="Hidden APKs"
           data={hiddenApkData}
