@@ -21,13 +21,7 @@ function RadarTooltip({ active, payload, label }) {
         <div key={i} className="brc-row-between">
           <div className="brc-legend-row">
             <div
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: p.color,
-                flexShrink: 0,
-              }}
+              className="brc-tooltip-dot" style={{ "--dot-color": p.color }}
             />
             <span className="brc-legend-val">{p.name}</span>
           </div>
@@ -53,7 +47,7 @@ function DayTick({ x, y, payload, onDayClick }) {
             }
           : undefined
       }
-      style={{ cursor: onDayClick ? "pointer" : "default" }}
+      className={onDayClick ? "brc-day-tick brc-day-tick--clickable" : "brc-day-tick"}
     >
       <rect
         x={-22}
@@ -173,28 +167,10 @@ export default function BlockRadarChart({
               }}
               onMouseEnter={() => setHovered(b.key)}
               onMouseLeave={() => setHovered(null)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "4px 10px",
-                borderRadius: 20,
-                border: "none",
-                cursor: "pointer",
-                background: hidden[b.key] ? "#f1f5f9" : `${b.color}18`,
-                opacity: hidden[b.key] ? 0.45 : 1,
-                transition: "all .15s",
-              }}
+              className={`brc-legend-btn${hidden[b.key] ? " brc-legend-btn--hidden" : ""}`}
+              style={{ "--legend-bg": `${b.color}18` }}
             >
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: hidden[b.key] ? "#cbd5e1" : b.color,
-                  boxShadow: hidden[b.key] ? "none" : `0 0 4px ${b.color}88`,
-                }}
-              />
+              <div className="brc-legend-dot" style={{ "--dot-color": b.color, "--dot-shadow": `0 0 4px ${b.color}88` }} />
               <span className="brc-bar-label">{b.key}</span>
             </button>
 
@@ -202,7 +178,7 @@ export default function BlockRadarChart({
             {hovered === b.key && (
               <div className="brc-popover-top">
                 <div className="brc-hint">7-day total</div>
-                <div style={{ color: b.color }}>
+                <div className="brc-popover-total" style={{ "--dot-color": b.color }}>
                   {totals[b.key]?.toLocaleString() ?? "--"}
                 </div>
                 <div className="brc-popover-bot" />

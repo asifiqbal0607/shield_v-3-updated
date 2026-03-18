@@ -515,8 +515,7 @@ export default function PageOverview({ service, setPage, role = "admin" }) {
                   </div>
                 </div>
                 <TinyDonut
-                  clicks={Math.round(c.clicks * filterScale)}
-                  visits={Math.round(c.visits * filterScale)}
+                  pct={Math.round((c.clicks / c.visits) * 100)}
                   color={c.color}
                 />
               </div>

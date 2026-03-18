@@ -166,7 +166,7 @@ function BarChartTooltip({ active, payload }) {
       ].map((r) => (
         <div key={r.label} className="ts-bar-tt-row">
           <span className="ts-bar-tt-lbl">{r.label}</span>
-          <span className="ts-bar-tt-val" style={{ color:r.color }}>{r.value}</span>
+          <span className="ts-bar-tt-val" style={{ "--c": r.color }}>{r.value}</span>
         </div>
       ))}
     </div>
@@ -179,9 +179,7 @@ function SourceModal({ source, onClose }) {
   return (
     <div className="partner-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="partner-box ts-modal-box">
-        <div className="partner-modal-header" style={{
-          background:"linear-gradient(135deg, #0a1628 0%, " + source.color + "44 100%)",
-        }}>
+        <div className="partner-modal-header ts-modal-header" style={{ "--src-color": source.color }}>
           <div className="f-gap-14">
             <SourceAvatar src={source} size={46} />
             <div>
@@ -200,7 +198,7 @@ function SourceModal({ source, onClose }) {
               { label:"Conv. Rate",  value: source.convRate + "%",               color: VIOLET },
             ].map((k) => (
               <div key={k.label} className="ts-modal-kpi-cell">
-                <div className="ts-modal-kpi-val" style={{ color:k.color }}>{k.value}</div>
+                <div className="ts-modal-kpi-val" style={{ "--c": k.color }}>{k.value}</div>
                 <div className="ts-modal-kpi-lbl">{k.label}</div>
               </div>
             ))}
@@ -315,15 +313,9 @@ export default function Trafficsources() {
       <div className="ts-tab-strip">
         {TABS.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className="ts-tab-btn"
-            style={{
-              fontWeight: tab === t.key ? 700 : 600,
-              color: tab === t.key ? t.color : "var(--text-3)",
-              borderBottom: tab === t.key ? "2.5px solid " + t.color : "2.5px solid transparent",
-            }}>
-            <span className="ts-tab-pip" style={{
-              background: tab === t.key ? t.color : "#cbd5e1",
-            }} />
+            className={`ts-tab-btn${tab === t.key ? " ts-tab-btn--active" : ""}`}
+            style={{ "--tab-color": t.color }}>
+            <span className="ts-tab-pip" />
             {t.label}
           </button>
         ))}
@@ -336,8 +328,8 @@ export default function Trafficsources() {
           <div>
             <div className="g-stats4 mb-section">
               {KPI.map((k) => (
-                <div key={k.label} className="ts-kpi-card" style={{ borderTop: "3px solid " + k.color }}>
-                  <div className="ts-kpi-val" style={{ color: k.color }}>{k.value}</div>
+                <div key={k.label} className="ts-kpi-card" style={{ "--c": k.color }}>
+                  <div className="ts-kpi-val" style={{ "--c": k.color }}>{k.value}</div>
                   <div className="ts-kpi-lbl">{k.label}</div>
                   <div className="ts-kpi-sub">{k.sub}</div>
                 </div>
@@ -376,7 +368,7 @@ export default function Trafficsources() {
                   <div className="ts-rev-legend">
                     {SOURCES.map((s) => (
                       <div key={s.id} className="ts-rev-legend-item">
-                        <span className="ts-rev-legend-dot" style={{ background: s.color }} />
+                        <span className="ts-rev-legend-dot" style={{ "--c": s.color }} />
                         <span className="ts-rev-legend-name">{s.name.split(" ")[0]}</span>
                         <span className="ts-rev-legend-pct">{s.revShare}%</span>
                       </div>
@@ -424,13 +416,13 @@ export default function Trafficsources() {
 
                     <div className="ts-revshare-row">
                       <span className="ts-revshare-lbl">Revenue share</span>
-                      <span className="ts-src-kpi-val" style={{ color: src.color }}>{src.revShare}%</span>
+                      <span className="ts-src-kpi-val ts-revshare-val-color" style={{ "--c": src.color }}>{src.revShare}%</span>
                     </div>
                     <div className="ts-revshare-track">
-                      <div className="ts-revshare-fill" style={{ width: src.revShare + "%", background: src.color }} />
+                      <div className="ts-revshare-fill" style={{ width: src.revShare + "%", "--c": src.color }} />
                     </div>
 
-                    <div className="ts-src-trend" style={{ color: src.trendUp ? "#16a34a" : "#dc2626" }}>
+                    <div className={`ts-src-trend ${src.trendUp ? "ts-src-trend--up" : "ts-src-trend--dn"}`}>
                       {src.trendUp ? "+" : ""}{src.trend} vs last period
                     </div>
                   </div>
@@ -446,15 +438,9 @@ export default function Trafficsources() {
             <div className="ts-trends-btn-row">
               {SERIES.map((s) => (
                 <button key={s.key} onClick={() => toggleSeries(s.key)}
-                  className="ts-trends-series-btn"
-                  style={{
-                    border: "1.5px solid " + (series[s.key] ? s.color : "var(--border)"),
-                    background: series[s.key] ? s.color + "12" : "var(--bg-subtle)",
-                    color: series[s.key] ? s.color : "var(--text-4)",
-                  }}>
-                  <span className="ts-trends-pip" style={{
-                    background: series[s.key] ? s.color : "#cbd5e1",
-                  }} />
+                  className={`ts-trends-series-btn${series[s.key] ? " ts-trends-series-btn--on" : ""}`}
+                  style={{ "--series-color": s.color }}>
+                  <span className="ts-trends-pip" />
                   {s.label}
                 </button>
               ))}
@@ -522,8 +508,8 @@ export default function Trafficsources() {
           <div>
             <div className="g-stats4 mb-section">
               {KPI.map((k) => (
-                <div key={k.label} className="ts-kpi-card" style={{ borderTop: "3px solid " + k.color }}>
-                  <div className="ts-kpi-val" style={{ color: k.color }}>{k.value}</div>
+                <div key={k.label} className="ts-kpi-card" style={{ "--c": k.color }}>
+                  <div className="ts-kpi-val" style={{ "--c": k.color }}>{k.value}</div>
                   <div className="ts-kpi-lbl">{k.label}</div>
                 </div>
               ))}
@@ -557,7 +543,7 @@ export default function Trafficsources() {
                   ))}
                 </div>
                 <div className="p-rel">
-                  <span className="partner-search-icon" style={{ fontSize:11 }}>&#9906;</span>
+                  <span className="partner-search-icon ts-search-icon-sm">&#9906;</span>
                   <input className="partner-search" placeholder="Search sources..."
                     value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
@@ -592,7 +578,7 @@ export default function Trafficsources() {
                         <td className="p-sm">
                           <div className="ts-tbl-clicks-row">
                             <MiniBar value={src.clicks} max={maxClicks} color={src.color} />
-                            <span className="ts-tbl-clicks-val" style={{ color: src.color }}>
+                            <span className="ts-tbl-clicks-val" style={{ "--c": src.color }}>
                               {src.clicks.toLocaleString()}
                             </span>
                           </div>
@@ -600,7 +586,7 @@ export default function Trafficsources() {
                         <td className="p-sm">
                           <div className="ts-tbl-conv-row">
                             <div className="ts-tbl-conv-track">
-                              <div className="ts-tbl-conv-fill" style={{ width: Math.min(src.convRate * 8, 100) + "%" }} />
+                              <div className="ts-tbl-conv-fill" style={{ "--w": Math.min(src.convRate * 8, 100) + "%", width: "var(--w)" }} />
                             </div>
                             <span className="ts-tbl-conv-val">{src.convRate}%</span>
                           </div>
@@ -609,7 +595,7 @@ export default function Trafficsources() {
                         <td className="p-sm">
                           <div className="ts-tbl-revshare-row">
                             <div className="ts-tbl-revshare-track">
-                              <div className="ts-tbl-revshare-fill" style={{ width: src.revShare + "%", background: src.color }} />
+                              <div className="ts-tbl-revshare-fill" style={{ width: src.revShare + "%", "--c": src.color }} />
                             </div>
                             <span className="ts-tbl-revshare-val">{src.revShare}%</span>
                           </div>

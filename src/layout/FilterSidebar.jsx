@@ -127,8 +127,7 @@ export default function FilterSidebar({ role, setRole, setPage, onSearch }) {
               width="20"
               height="15"
               alt="ZA"
-              className="fsb-geo-flag"
-              style={{ borderRadius: 2, objectFit: 'cover' }}
+              className="fsb-geo-flag fsb-geo-flag-img"
             />
             South Africa (ZA)
           </div>

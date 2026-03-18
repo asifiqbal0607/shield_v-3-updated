@@ -236,8 +236,8 @@ export function FraudDescriptionsModal({ onClose }) {
                   return (
                     <tr key={row.code} className="fc-desc-row">
                       <td className="fc-td-top">
-                        <span className="fc-code-pill" style={{ background: `rgba(${hexToRgb(color)},.1)`, color }}>
-                          <span className="fc-code-dot" style={{ background: color }} />
+                        <span className="fc-code-pill" style={{ "--pill-bg": `rgba(${hexToRgb(color)},.1)`, "--c": color }}>
+                          <span className="fc-code-dot" style={{ "--c": color }} />
                           {row.code}
                         </span>
                       </td>
@@ -259,8 +259,8 @@ export function FraudDescriptionsModal({ onClose }) {
                       return (
                         <tr key={row.code} className="fc-desc-row fc-desc-row-click" onClick={() => toggleRow(row.code)}>
                           <td className="fc-td-top">
-                            <span className="fc-code-pill" style={{ background: `rgba(${hexToRgb(color)},.1)`, color }}>
-                              <span className="fc-code-dot" style={{ background: color }} />
+                            <span className="fc-code-pill" style={{ "--pill-bg": `rgba(${hexToRgb(color)},.1)`, "--c": color }}>
+                              <span className="fc-code-dot" style={{ "--c": color }} />
                               {row.code}
                             </span>
                           </td>
@@ -355,7 +355,7 @@ function MapForm({ onViewAll }) {
             <div className="fc-color-swatch">
               <input type="color" value={color} onChange={(e) => setColor(e.target.value)} />
             </div>
-            <div className="fc-color-preview" style={{ background: color }} />
+            <div className="fc-color-preview" style={{ "--c": color }} />
           </div>
         </div>
         <div className="fc-divider" />
@@ -436,7 +436,7 @@ function ViewAll({ onBack }) {
           { label: "Child Codes",  val: totalChildren, color: "#16a34a" },
         ].map(({ label, val, color }) => (
           <div key={label} className="fc-stat-card">
-            <div className="fc-stat-bar" style={{ background: color }} />
+            <div className="fc-stat-bar" style={{ "--c": color }} />
             <div>
               <div className="fc-stat-num">{val}</div>
               <div className="fc-stat-lbl">{label}</div>
@@ -449,9 +449,9 @@ function ViewAll({ onBack }) {
       <div className="fc-list-card">
         {filtered.map((code) => (
           <div key={code.id}>
-            <div className="fc-list-row" style={{ borderLeftColor: code.color }}
+            <div className="fc-list-row" style={{ "--c": code.color }}
               onClick={() => code.children?.length && toggle(code.id)}>
-              <div className="fc-list-dot" style={{ background: code.color }} />
+              <div className="fc-list-dot" style={{ "--c": code.color }} />
               <span className="fc-list-label">
                 {code.label}
                 <span className="fc-list-id">{code.id}</span>
@@ -459,7 +459,7 @@ function ViewAll({ onBack }) {
               {code.children?.length > 0 && (
                 <span className="fc-list-badge">{code.children.length} {code.children.length === 1 ? "child" : "children"}</span>
               )}
-              <div className="fc-list-swatch" style={{ background: code.color }} />
+              <div className="fc-list-swatch" style={{ "--c": code.color }} />
               <span className="fc-list-edit" onClick={(e) => e.stopPropagation()}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -472,13 +472,13 @@ function ViewAll({ onBack }) {
             </div>
 
             {expanded[code.id] && code.children?.map((child) => (
-              <div key={child.id} className="fc-child-row" style={{ borderLeftColor: code.color }}>
-                <div className="fc-child-dot" style={{ background: child.color }} />
+              <div key={child.id} className="fc-child-row" style={{ "--c": code.color }}>
+                <div className="fc-child-dot" style={{ "--c": child.color }} />
                 <span className="fc-list-label fc-child-label">
                   {child.label}
                   <span className="fc-list-id">{child.id}</span>
                 </span>
-                <div className="fc-list-swatch fc-child-swatch" style={{ background: child.color }} />
+                <div className="fc-list-swatch fc-child-swatch" style={{ "--c": child.color }} />
                 <span className="fc-list-edit">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>

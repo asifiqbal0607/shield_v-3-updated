@@ -102,7 +102,7 @@ function PartnerModal({ partner, onClose, onSave, onDelete }) {
       <div className="partner-box">
         <div className="partner-modal-header">
           <div className="f-gap-14">
-            <div className="partner-avatar" style={{ background: av.bg, color: av.c }}>
+            <div className="partner-avatar" style={{ "--bg": av.bg, "--c": av.c }}>
               {partner.name[0]}
             </div>
             <div>
@@ -262,7 +262,7 @@ function AddPartnerModal({ onClose, onAdd }) {
             <div className="mb-section">
               <div className="ph-toggle-row">
                 <div>
-                  <div className="form-label" style={{marginBottom:2}}>Also a Direct Client?</div>
+                  <div className="form-label form-label-tight">Also a Direct Client?</div>
                   <div className="stat-sublabel">This CSP has a direct contract with us</div>
                 </div>
                 <button type="button" className={`ph-toggle${form.isDirectClient?" on":""}`}
@@ -270,8 +270,8 @@ function AddPartnerModal({ onClose, onAdd }) {
                   <span className="ph-toggle-knob"/>
                 </button>
               </div>
-              <div style={{marginTop:12}}>
-                <label className="form-label">Under Aggregator <span style={{color:"var(--text-4)",fontWeight:400}}>(optional)</span></label>
+              <div className="form-field-mt12">
+                <label className="form-label">Under Aggregator <span className="txt-optional">(optional)</span></label>
                 <select className="form-input" value={form.aggregatorId} onChange={(e)=>set("aggregatorId",e.target.value)}>
                   <option value="">— None (standalone CSP) —</option>
                   {AGGREGATOR_LIST.map((a)=><option key={a.id} value={a.id}>{a.name} · {FLAG[a.country]??""} {a.country}</option>)}
@@ -323,15 +323,15 @@ function NodeCard({ node, isDragging, onDragStart }) {
     <div className={`ph-hier-node${isDragging?" ph-hier-dragging":""}${node.isDirectClient&&node.role==="csp"?" ph-hier-dual":""}`}
       draggable onDragStart={(e)=>onDragStart(e,node.id)}>
       <span className="ph-hier-handle">⠿</span>
-      <div className="partner-row-avatar" style={{background:av.bg,color:av.c,width:28,height:28,fontSize:11,flexShrink:0}}>
+      <div className="partner-row-avatar partner-row-avatar--sm" style={{ "--bg": av.bg, "--c": av.c }}>
         {node.name[0]}
       </div>
-      <div style={{flex:1,minWidth:0}}>
-        <div className="txt-strong-sm" style={{marginBottom:3}}>{node.name}</div>
+      <div className="ph-node-info">
+        <div className="txt-strong-sm ph-node-name">{node.name}</div>
         <div className="f-gap-4">
-          <span className="badge badge-blue" style={{fontSize:9,padding:"1px 6px"}}>CSP</span>
-          <span className="badge badge-gray" style={{fontSize:9,padding:"1px 6px"}}>{FLAG[node.geo]??""} {node.geo}</span>
-          {node.isDirectClient&&<span className="badge badge-green" style={{fontSize:9,padding:"1px 6px"}}>Direct</span>}
+          <span className="badge badge-blue ph-badge-xs">CSP</span>
+          <span className="badge badge-gray ph-badge-xs">{FLAG[node.geo]??""} {node.geo}</span>
+          {node.isDirectClient&&<span className="badge badge-green ph-badge-xs">Direct</span>}
         </div>
       </div>
     </div>
@@ -350,12 +350,12 @@ function AggLane({ agg, children, onDrop, onDragOver, draggingId }) {
     <div className="ph-hier-lane">
       <div className="ph-hier-lane-hd">
         <div className="f-gap-10">
-          <div className="partner-row-avatar" style={{background:av.bg,color:av.c,width:34,height:34}}>
+          <div className="partner-row-avatar partner-row-avatar--md" style={{ "--bg": av.bg, "--c": av.c }}>
             {agg.name[0]}
           </div>
           <div>
             <div className="txt-strong-sm">{agg.name}</div>
-            <div className="txt-mono" style={{marginTop:2}}>{FLAG[agg.geo]??""} {agg.geo}</div>
+            <div className="txt-mono ph-agg-geo">{FLAG[agg.geo]??""} {agg.geo}</div>
           </div>
         </div>
         <span className="badge badge-blue">{children.length} CSPs</span>
@@ -395,35 +395,22 @@ function DirectSection({ nodes, onDrop, onDragOver, draggingId, onDragStart, onR
             <div key={n.id} className={`ph-hier-chip${draggingId===n.id?" ph-hier-dragging":""}`}
               draggable onDragStart={(e)=>onDragStart(e,n.id)}>
               <span className="ph-hier-handle">⠿</span>
-              <div className="partner-row-avatar" style={{background:av.bg,color:av.c,width:28,height:28,fontSize:11,flexShrink:0}}>
+              <div className="partner-row-avatar partner-row-avatar--sm" style={{ "--bg": av.bg, "--c": av.c }}>
                 {n.name[0]}
               </div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:12,fontWeight:600,color:"var(--text)"}}>{n.name}</div>
-                <div style={{fontSize:10,color:"var(--text-4)",marginTop:1}}>{FLAG[n.geo]??""} {n.geo}</div>
+              <div className="ph-node-info">
+                <div className="ph-direct-chip-name">{n.name}</div>
+                <div className="ph-direct-chip-geo">{FLAG[n.geo]??""} {n.geo}</div>
               </div>
               {/* FIX 2: Remove button */}
               <button
                 onClick={(e)=>{e.stopPropagation();onRemove(n.id);}}
                 title="Remove from direct clients"
-                style={{
-                  background:"none",
-                  border:"none",
-                  cursor:"pointer",
-                  fontSize:16,
-                  color:"var(--text-4)",
-                  lineHeight:1,
-                  padding:"2px 4px",
-                  borderRadius:4,
-                  flexShrink:0,
-                  transition:"color .15s",
-                }}
-                onMouseEnter={(e)=>e.currentTarget.style.color="var(--color-danger)"}
-                onMouseLeave={(e)=>e.currentTarget.style.color="var(--text-4)"}
+                className="ph-direct-chip-remove"
               >×</button>
             </div>
           );
-        }) : <div className="ph-hier-empty" style={{padding:"20px 0",width:"100%"}}>Drop clients here</div>}
+        }) : <div className="ph-hier-empty ph-hier-direct-empty">Drop clients here</div>}
       </div>
     </div>
   );
@@ -468,23 +455,23 @@ function HierarchyTab({ nodes, onReparent }) {
     <div className="ph-hier-root">
       {/* Legend */}
       <div className="ph-hier-legend">
-        <div className="f-gap-8" style={{alignItems:"center"}}>
+        <div className="f-gap-8 ph-legend-align">
           <span style={{width:8,height:8,borderRadius:"50%",background:"var(--color-primary)",display:"inline-block",flexShrink:0}}/>
           <span className="stat-sublabel">Aggregator</span>
         </div>
-        <div className="f-gap-8" style={{alignItems:"center"}}>
-          <span className="badge badge-blue" style={{fontSize:9,padding:"1px 6px"}}>CSP</span>
+        <div className="f-gap-8 ph-legend-align">
+          <span className="badge badge-blue ph-badge-xs">CSP</span>
           <span className="stat-sublabel">Content Service Provider</span>
         </div>
-        <div className="f-gap-8" style={{alignItems:"center"}}>
+        <div className="f-gap-8 ph-legend-align">
           <span style={{width:8,height:8,borderRadius:"50%",background:"var(--color-success)",display:"inline-block",flexShrink:0}}/>
           <span className="stat-sublabel">Direct client — standalone</span>
         </div>
-        <div className="f-gap-8" style={{alignItems:"center"}}>
-          <span className="badge badge-green" style={{fontSize:9,padding:"1px 6px"}}>Direct</span>
+        <div className="f-gap-8 ph-legend-align">
+          <span className="badge badge-green ph-badge-xs">Direct</span>
           <span className="stat-sublabel">CSP with direct contract</span>
         </div>
-        <span className="stat-sublabel" style={{marginLeft:"auto"}}>⠿ Drag to reassign</span>
+        <span className="stat-sublabel ph-lang-ml-auto">⠿ Drag to reassign</span>
       </div>
 
       <DirectSection
@@ -547,7 +534,7 @@ function ManageTab({ partners, setPartners, onAddClick }) {
           {label:"Inactive",       value:inactive, color:ROSE },
         ].map((s)=>(
           <Card key={s.label}>
-            <div className="kpi-stat" style={{color:s.color}}>{s.value}</div>
+            <div className="kpi-stat" style={{ "--c": s.color }}>{s.value}</div>
             <div className="stat-label">{s.label}</div>
           </Card>
         ))}
@@ -574,20 +561,20 @@ function ManageTab({ partners, setPartners, onAddClick }) {
         </Card>
         <Card>
           <SectionTitle>By Status</SectionTitle>
-          <div className="f-col-10" style={{paddingTop:4}}>
+          <div className="f-col-10 manage-status-col">
             {[
               {label:"Active",         count:active,   color:GREEN,pct:Math.round(active/total*100)},
               {label:"Needs Attention",count:needsattention,  color:AMBER,pct:Math.round(needsattention/total*100)},
               {label:"Inactive",       count:inactive, color:ROSE, pct:Math.round(inactive/total*100)},
             ].map((s)=>(
               <div key={s.label}>
-                <div className="f-gap-8" style={{fontSize:12,marginBottom:5,alignItems:"center"}}>
+                <div className="f-gap-8 manage-stat-row-lbl">
                   <span style={{width:7,height:7,borderRadius:"50%",background:s.color,flexShrink:0,display:"inline-block"}}/>
-                  <span style={{flex:1,color:"var(--text-2)",fontWeight:500}}>{s.label}</span>
-                  <span style={{fontWeight:700,color:"var(--text)"}}>{s.count}</span>
-                  <span style={{fontSize:11,color:"var(--text-4)",minWidth:30,textAlign:"right"}}>{s.pct}%</span>
+                  <span className="manage-stat-lbl-txt">{s.label}</span>
+                  <span className="manage-stat-count">{s.count}</span>
+                  <span className="manage-stat-pct">{s.pct}%</span>
                 </div>
-                <div style={{height:4,background:"var(--border)",borderRadius:99,overflow:"hidden",marginBottom:2}}>
+                <div className="manage-stat-bar">
                   <div style={{height:"100%",width:`${s.pct}%`,background:s.color,borderRadius:99}}/>
                 </div>
               </div>
@@ -639,7 +626,7 @@ function ManageTab({ partners, setPartners, onAddClick }) {
                   <tr key={p.id} className="dt-tr" onClick={()=>setSelected(p)}>
                     <td className="p-sm">
                       <div className="f-gap-10">
-                        <div className="partner-row-avatar" style={{background:av.bg,color:av.c}}>{p.name[0]}</div>
+                        <div className="partner-row-avatar" style={{ "--bg": av.bg, "--c": av.c }}>{p.name[0]}</div>
                         <div>
                           <div className="txt-strong-sm">{p.name}</div>
                           <div className="txt-mono">{p.id}</div>
@@ -700,7 +687,7 @@ export default function PagePartners() {
 
       {/* Page header */}
       <div className="ph-page-hd">
-        <div className="f-gap-14" style={{alignItems:"center"}}>
+        <div className="f-gap-14 ph-page-hd-align">
           <div className="ph-page-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -731,7 +718,7 @@ export default function PagePartners() {
           <button key={t.key}
             className={`ph-tab${activeTab===t.key?" ph-tab-active":""}`}
             onClick={()=>setActiveTab(t.key)}>
-            <span className="ph-tab-pip" style={{background:t.color}}/>
+            <span className="ph-tab-pip" style={{ "--c": t.color }}/>
             {t.label}
           </button>
         ))}

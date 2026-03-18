@@ -1829,13 +1829,11 @@ function ActionsDropdown({ rowId, openRow, setOpenRow, onAction }) {
     createPortal(
       <div
         ref={dropRef}
-        className="svc-adm-dropdown"
+        className="svc-adm-dropdown-portal"
         style={{
-          position: "fixed",
           top: coords.top ?? "auto",
           bottom: coords.bottom ?? "auto",
           right: coords.right,
-          zIndex: 99999,
         }}
       >
         {ADMIN_ACTIONS.map((a, i) => {
@@ -3670,7 +3668,7 @@ function SvcExportModal({
           {/* Header */}
           <div className="svc-exp-header">
             <div className="svc-exp-header-left">
-              <div className="svc-exp-icon" style={{ background: color }}>
+              <div className="svc-exp-icon" style={{ "--c": color }}>
                 ⬇
               </div>
               <div>
@@ -3725,7 +3723,7 @@ function SvcExportModal({
             <button
               type="button"
               className="svc-exp-next-btn"
-              style={{ background: color }}
+              style={{ "--c": color, background: "var(--c)" }}
               onClick={() => setAdminStep(2)}
             >
               Continue →
@@ -3744,7 +3742,7 @@ function SvcExportModal({
         {/* Header */}
         <div className="svc-exp-header">
           <div className="svc-exp-header-left">
-            <div className="svc-exp-icon" style={{ background: color }}>
+            <div className="svc-exp-icon" style={{ "--c": color }}>
               ⬇
             </div>
             <div>
@@ -3783,10 +3781,10 @@ function SvcExportModal({
         </div>
 
         {!isPartnerRole && selPartner && (
-          <div className="svc-exp-partner-pill" style={{ borderColor: color }}>
+          <div className="svc-exp-partner-pill" style={{ "--c": color }}>
             <span
               className="svc-exp-partner-pill-dot"
-              style={{ background: color }}
+              style={{ "--c": color }}
             />
             <span>
               Partner: <strong>{selPartner}</strong>
@@ -3924,7 +3922,7 @@ function SvcExportModal({
               <button
                 type="button"
                 className="svc-exp-export-btn"
-                style={{ background: color }}
+                style={{ "--c": color, background: "var(--c)" }}
                 onClick={doExport}
                 disabled={
                   exporting ||
@@ -4143,7 +4141,7 @@ export default function PageServices({ role = "admin", setPage }) {
                 {value}
               </div>
               <div className="stat-sublabel">{label}</div>
-              <div className="svc-stat-export-hint" style={{ color }}>
+              <div className="svc-stat-export-hint" style={{ "--c": color, color: "var(--c)" }}>
                 ↓ Export
               </div>
             </Card>
