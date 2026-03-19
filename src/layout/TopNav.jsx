@@ -1,5 +1,7 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { groupsForRole } from "../components/constants/nav";
+import { CopyIcon, SettingsIcon, LogOutIcon } from "../components/ui/Icons";
+import { useTickets } from "../context/TicketContext";
 
 function GUISettings() {
   const [clientStats, setClientStats] = useState("regular");
@@ -99,9 +101,12 @@ export default function TopNav({ role, setRole, page, setPage, onLogout }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [stagingCopied, setStagingCopied] = useState(false);
   const [stagingHover, setStagingHover] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const groups = groupsForRole(role);
   const isPartner = role === "partner";
+  const { getUnreadCount } = useTickets();
+  const supportUnread = isPartner ? getUnreadCount("Tiot") : 0;
   const flatItems = groups
     .filter((g) => g.group === null)
     .flatMap((g) => g.items);
@@ -131,7 +136,7 @@ export default function TopNav({ role, setRole, page, setPage, onLogout }) {
                 closeAll();
               }}
             >
-              <span className="t-icon">{p.icon}</span>
+              <span className="t-icon" style={{ "--ic": p.color || "#6366f1" }}>{p.icon && React.createElement(p.icon, { size: 14 })}</span>
               {p.label}
             </button>
           ))}
@@ -156,7 +161,7 @@ export default function TopNav({ role, setRole, page, setPage, onLogout }) {
                           closeAll();
                         }}
                       >
-                        <span className="di-ic">{p.icon}</span>
+                        <span className="di-ic" style={{ "--ic": p.color || "#6366f1" }}>{p.icon && React.createElement(p.icon, { size: 14 })}</span>
                         <span className="tnav-dropdown-flex">{p.label}</span>
                       </button>
                     ))}
@@ -177,7 +182,7 @@ export default function TopNav({ role, setRole, page, setPage, onLogout }) {
                 closeAll();
               }}
             >
-              <span className="t-icon">{p.icon}</span>
+              <span className="t-icon" style={{ "--ic": p.color || "#6366f1" }}>{p.icon && React.createElement(p.icon, { size: 14 })}</span>
               {p.label}
             </button>
           ))}
@@ -206,7 +211,7 @@ export default function TopNav({ role, setRole, page, setPage, onLogout }) {
                             closeAll();
                           }}
                         >
-                          <span className="di-ic">{p.icon}</span>
+                          <span className="di-ic" style={{ "--ic": p.color || "#6366f1" }}>{p.icon && React.createElement(p.icon, { size: 14 })}</span>
                           <span className="tnav-dropdown-flex">{p.label}</span>
                           {p.badge && (
                             <span
@@ -251,6 +256,49 @@ export default function TopNav({ role, setRole, page, setPage, onLogout }) {
         <div className="gui-settings-body">
           <GUISettings />
         </div>
+      </div>
+    </>
+  );
+
+
+  // ── Mock new partner tickets (in real app, fetch from API) ────────────────
+  const PARTNER_ALERTS = [
+    { id: "TKT-0041", partner: "Tiot",        category: "blocking",    priority: "critical", subject: "Clicks blocked on ZA network during UAT", time: "2 min ago"  },
+    { id: "TKT-0040", partner: "DTAC",        category: "integration", priority: "high",     subject: "Shield JS not firing on iOS 17 Safari",   time: "1 hr ago"   },
+    { id: "TKT-0039", partner: "IQ InterCom", category: "data",        priority: "medium",   subject: "Conversion count mismatch vs reports",     time: "2 hrs ago"  },
+  ];
+  const UNREAD_COUNT = PARTNER_ALERTS.length;
+
+  const PRI_COLOR = { critical: "#dc2626", high: "#d97706", medium: "#1652c8", low: "#0d9e6e" };
+  const CAT_ICON  = { blocking: "🚫", integration: "🔗", performance: "⚡", data: "📊", access: "🔑", other: "💬" };
+
+  const NotifDropdown = () => (
+    <>
+      <div className="tnav-notif-overlay" onClick={() => setNotifOpen(false)} />
+      <div className="tnav-notif-dropdown">
+        <div className="tnav-notif-hd">
+          <span className="tnav-notif-hd-title">Partner Tickets</span>
+          <span className="tnav-notif-hd-count">{UNREAD_COUNT} new</span>
+        </div>
+        <div className="tnav-notif-list">
+          {PARTNER_ALERTS.map((t) => (
+            <div key={t.id} className="tnav-notif-item" onClick={() => { setNotifOpen(false); setPage && setPage("support"); }}>
+              <span className="tnav-notif-cat-icon">{CAT_ICON[t.category] ?? "💬"}</span>
+              <div className="tnav-notif-item-body">
+                <div className="tnav-notif-item-subject">{t.subject}</div>
+                <div className="tnav-notif-item-meta">
+                  <span className="tnav-notif-item-partner">{t.partner}</span>
+                  <span className="tnav-notif-item-sep">·</span>
+                  <span className="tnav-notif-item-time">{t.time}</span>
+                </div>
+              </div>
+              <span className="tnav-notif-pri-dot" style={{ "--pri": PRI_COLOR[t.priority] }} />
+            </div>
+          ))}
+        </div>
+        <button className="tnav-notif-footer" onClick={() => { setNotifOpen(false); setPage && setPage("support"); }} type="button">
+          View all tickets →
+        </button>
       </div>
     </>
   );
@@ -301,19 +349,7 @@ export default function TopNav({ role, setRole, page, setPage, onLogout }) {
                 setTimeout(() => setStagingCopied(false), 2500);
               }}
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="9" y="9" width="13" height="13" rx="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
+              <CopyIcon size={14} />
             </button>
             {stagingHover && (
               <div className="tnav-staging-tooltip">
@@ -342,11 +378,40 @@ export default function TopNav({ role, setRole, page, setPage, onLogout }) {
             )}
           </div>
 
-          {/* Notifications */}
-          <div className="tnav-notif-wrap">
-            <button className="tnav-notif-btn">🔔</button>
-            <span className="tnav-notif-pip" />
-          </div>
+          {/* Notifications — admin only */}
+          {!isPartner && (
+            <div className="tnav-notif-wrap">
+              <button
+                className="tnav-notif-btn"
+                onClick={() => setNotifOpen((v) => !v)}
+                type="button"
+              >
+                🔔
+              </button>
+              {UNREAD_COUNT > 0 ? (
+                <span className="tnav-notif-badge">{UNREAD_COUNT}</span>
+              ) : (
+                <span className="tnav-notif-pip" />
+              )}
+              {notifOpen && <NotifDropdown />}
+            </div>
+          )}
+
+          {/* Support — partner only */}
+          {isPartner && (
+            <div className="tnav-support-wrap">
+              <button
+                className="tnav-support-btn"
+                onClick={() => setPage("support")}
+                type="button"
+              >
+                Support
+              </button>
+              {supportUnread > 0 && (
+                <span className="tnav-support-badge">{supportUnread}</span>
+              )}
+            </div>
+          )}
 
           {/* Settings */}
           <button
@@ -354,19 +419,7 @@ export default function TopNav({ role, setRole, page, setPage, onLogout }) {
             title="GUI Settings"
             onClick={() => setSettingsOpen((v) => !v)}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
+            <SettingsIcon size={16} />
           </button>
 
           <div className="tnav-avatar">{isPartner ? "P" : "A"}</div>
@@ -379,20 +432,7 @@ export default function TopNav({ role, setRole, page, setPage, onLogout }) {
             onClick={onLogout}
             type="button"
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
+            <LogOutIcon size={16} />
           </button>
         </div>
       </div>

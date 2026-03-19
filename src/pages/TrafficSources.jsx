@@ -8,6 +8,7 @@ import {
 } from "recharts";
 import { Card, SectionTitle } from "../components/ui";
 import { BLUE, GREEN, AMBER, ROSE } from "../components/constants/colors";
+import { TrafficIcon, InfoIcon } from "../components/ui/Icons";
 
 const VIOLET = "#7c3aed";
 const CYAN   = "#0891b2";
@@ -285,9 +286,7 @@ export default function Trafficsources() {
         <div className="ts-page-hd-row">
           <div className="ts-page-icon-wrap">
             <div className="ts-page-icon-box">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-              </svg>
+              <TrafficIcon size={20} />
             </div>
             <div>
               <h1 className="ts-page-title">Traffic Sources</h1>
@@ -301,9 +300,7 @@ export default function Trafficsources() {
             </div>
           </div>
           <div className="ts-info-badge">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
+            <InfoIcon size={13} />
             Identified via gclid / fbclid / ttclid / twclid / ScCid
           </div>
         </div>

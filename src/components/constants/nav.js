@@ -1,151 +1,65 @@
 import { GREEN } from "./colors";
+import {
+  LayoutDashboard,
+  Users,
+  Settings2,
+  Handshake,
+  Globe,
+  ClipboardList,
+  BarChart3,
+  ShieldBan,
+  MapPin,
+  Smartphone,
+  PackageSearch,
+  Activity,
+  BookOpen,
+  ShieldAlert,
+  KeyRound,
+  HeadphonesIcon,
+} from "lucide-react";
 
 export const NAV_GROUPS = [
-  // ── Ungrouped (flat tabs for all roles) ──────────────────────────────────
   {
     group: null,
     items: [
-      {
-        key: "overview",
-        label: "Dashboard",
-        icon: "▦",
-        roles: ["admin", "partner"],
-      },
+      { key: "overview",   label: "Dashboard",   icon: LayoutDashboard, color: "#6366f1", roles: ["admin", "partner"] },
     ],
   },
-
-  // ── Management — appears first so partner sees Users/Services up front ───
   {
     group: "Management",
     items: [
-      {
-        key: "users",
-        label: "Manage Users",
-        icon: "◎",
-        roles: ["admin", "partner"],
-      },
-      {
-        key: "services",
-        label: "Manage Services",
-        icon: "⚙",
-        roles: ["admin", "partner"],
-      },
-      {
-        key: "partners",
-        label: "Partners",
-        icon: "◈",
-        roles: ["admin"],
-        badge: { n: "12", c: GREEN },
-      },
-      {
-        key: "ip-manager",
-        label: "IP Manager",
-        icon: "🌐",
-        roles: ["admin"],
-      },
-      {
-        key: "audit",
-        label: "Audit Log",
-        icon: "📋",
-        roles: ["admin"],
-        badge: { n: "New", c: GREEN },
-      },
+      { key: "users",      label: "Manage Users",    icon: Users,         color: "#3b82f6", roles: ["admin", "partner"] },
+      { key: "services",   label: "Manage Services", icon: Settings2,     color: "#8b5cf6", roles: ["admin", "partner"] },
+      { key: "partners",   label: "Partners",        icon: Handshake,     color: "#10b981", roles: ["admin"], badge: { n: "12", c: GREEN } },
+      { key: "ip-manager", label: "IP Manager",      icon: Globe,         color: "#0ea5e9", roles: ["admin"] },
+      { key: "audit",      label: "Audit Log",       icon: ClipboardList, color: "#f59e0b", roles: ["admin"], badge: { n: "New", c: GREEN } },
     ],
   },
-
-  // ── Analytics ────────────────────────────────────────────────────────────
   {
     group: "Analytics",
     items: [
-      {
-        key: "reporting",
-        label: "Reporting",
-        icon: "≡",
-        roles: ["admin", "partner"],
-      },
-      {
-        key: "block",
-        label: "Block Reasons",
-        icon: "⊗",
-        roles: ["admin", "partner"],
-      },
-      {
-        key: "geo",
-        label: "GEO Stats",
-        icon: "⊕",
-        roles: ["admin", "partner"],
-      },
-      {
-        key: "device",
-        label: "Device Stats",
-        icon: "⊡",
-        roles: ["admin", "partner"],
-      },
-      {
-        key: "apks",
-        label: "APK Stats",
-        icon: "📦",
-        roles: ["admin", "partner"],
-      },
-      {
-        key: "traffic-sources",
-        label: "Traffic Sources",
-        icon: "📶",
-        roles: ["admin"],
-        badge: { n: "New", c: GREEN },
-      },
-      {
-        key: "ip-manager",
-        label: "IP Manager",
-        icon: "🌐",
-        roles: ["partner"],
-      },
+      { key: "reporting",       label: "Reporting",       icon: BarChart3,     color: "#f97316", roles: ["admin", "partner"] },
+      { key: "block",           label: "Block Reasons",   icon: ShieldBan,     color: "#ef4444", roles: ["admin", "partner"] },
+      { key: "geo",             label: "GEO Stats",       icon: MapPin,        color: "#14b8a6", roles: ["admin", "partner"] },
+      { key: "device",          label: "Device Stats",    icon: Smartphone,    color: "#a78bfa", roles: ["admin", "partner"] },
+      { key: "apks",            label: "APK Stats",       icon: PackageSearch, color: "#f59e0b", roles: ["admin", "partner"] },
+      { key: "traffic-sources", label: "Traffic Sources", icon: Activity,      color: "#06b6d4", roles: ["admin"], badge: { n: "New", c: GREEN } },
+      { key: "ip-manager",      label: "IP Manager",      icon: Globe,         color: "#0ea5e9", roles: ["partner"] },
     ],
   },
-
-  // ── More — partner-only extras ───────────────────────────────────────────
   {
     group: "More",
     items: [
-      {
-        key: "traffic-sources",
-        label: "Traffic Sources",
-        icon: "📶",
-        roles: ["partner"],
-        badge: { n: "New", c: GREEN },
-      },
+      { key: "traffic-sources", label: "Traffic Sources", icon: Activity, color: "#06b6d4", roles: ["partner"], badge: { n: "New", c: GREEN } },
     ],
   },
-
-  // ── Resources ────────────────────────────────────────────────────────────
   {
     group: "Resources",
     items: [
-      {
-        key: "docs",
-        label: "Documentation",
-        icon: "📖",
-        roles: ["admin", "partner"],
-      },
-      // {
-      //   key: "password-generator",
-      //   label: "Password Generator",
-      //   icon: "🔑",
-      //   roles: ["admin"],
-      // },
-      {
-        key: "fraud-codes",
-        label: "Shield Fraud Codes",
-        icon: "🛡️",
-        roles: ["admin", "partner"],
-      },
-      {
-        key: "sandbox",
-        label: "Sandbox Environment",
-        icon: "📋",
-        roles: ["admin"],
-        badge: { n: "New", c: GREEN },
-      },
+      { key: "docs",        label: "Documentation",     icon: BookOpen,    color: "#64748b", roles: ["admin", "partner"] },
+      { key: "fraud-codes", label: "Shield Fraud Codes", icon: ShieldAlert, color: "#dc2626", roles: ["admin", "partner"] },
+      { key: "sandbox",     label: "Sandbox",           icon: KeyRound,    color: "#7c3aed", roles: ["admin"], badge: { n: "New", c: GREEN } },
+      { key: "support",     label: "Support",           icon: HeadphonesIcon, color: "#0d9488", roles: ["partner"] },
     ],
   },
 ];

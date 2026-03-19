@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import ModalFooter from "../../layout/ModalFooter";
+import { ChevronDownIcon, ChevronRightIcon, PlusIcon, LockIcon, CloseIcon } from "../../components/ui/Icons";
 
 const T = "#0d9488"; // teal brand
 
@@ -54,17 +55,7 @@ function Select({ label, required, options, value, onChange, hint }) {
             </option>
           ))}
         </select>
-        <svg
-          className="ob-chevron"
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
+        <ChevronDownIcon size={14} className="ob-chevron" />
       </div>
       {hint && <p className="ob-hint">{hint}</p>}
     </div>
@@ -95,17 +86,7 @@ function YesNo({ label, required, value, onChange, hint }) {
 function AddMore({ label, onClick }) {
   return (
     <button type="button" className="ob-add-more" onClick={onClick}>
-      <svg
-        width="12"
-        height="12"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-      >
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
-      </svg>
+      <PlusIcon size={12} />
       {label}
     </button>
   );
@@ -278,32 +259,14 @@ export default function PageOnboardingServices({ setPage }) {
           >
             MCP Shield
           </span>
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          <ChevronRightIcon size={12} />
           <span
             className="ob-breadcrumb-link"
             onClick={() => setPage && setPage("services")}
           >
             Partner Portal
           </span>
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          <ChevronRightIcon size={12} />
           <span>New Service Onboarding</span>
         </div>
         <h1 className="ob-hero-title">New Service Onboarding</h1>
@@ -377,30 +340,10 @@ export default function PageOnboardingServices({ setPage }) {
                     <option>Teleinfotech</option>
                     <option>Zain</option>
                   </select>
-                  <svg
-                    className="ob-chevron"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
+                  <ChevronDownIcon size={14} className="ob-chevron" />
                 </div>
                 <button className="ob-icon-btn" title="Add new CSP">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
+                  <PlusIcon size={14} />
                 </button>
               </div>
               <p className="ob-hint">
@@ -440,17 +383,7 @@ export default function PageOnboardingServices({ setPage }) {
                     </option>
                   ))}
                 </select>
-                <svg
-                  className="ob-chevron"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
+                <ChevronDownIcon size={14} className="ob-chevron" />
               </div>
               <p className="ob-hint">
                 Select the country where the service operates. This determines
@@ -472,30 +405,10 @@ export default function PageOnboardingServices({ setPage }) {
                       </option>
                     ))}
                   </select>
-                  <svg
-                    className="ob-chevron"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
+                  <ChevronDownIcon size={14} className="ob-chevron" />
                 </div>
                 <button className="ob-icon-btn" title="Add custom MNO">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
+                  <PlusIcon size={14} />
                 </button>
               </div>
               <p className="ob-hint">
@@ -643,19 +556,7 @@ export default function PageOnboardingServices({ setPage }) {
         >
           {paymentLocked ? (
             <div className="ob-locked-notice">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
+              <LockIcon size={16} />
               <div>
                 <div className="ob-locked-title">Payment Flow Options</div>
                 <div className="ob-locked-sub">
@@ -701,17 +602,7 @@ export default function PageOnboardingServices({ setPage }) {
                   className="ob-ip-remove"
                   onClick={() => setIps((p) => p.filter((_, idx) => idx !== i))}
                 >
-                  <svg
-                    width="11"
-                    height="11"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
+                  <CloseIcon size={11} />
                 </button>
               </div>
             ))}
@@ -738,17 +629,7 @@ export default function PageOnboardingServices({ setPage }) {
                 }
               }}
             >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+              <PlusIcon size={13} />
               Add IP
             </button>
           </div>

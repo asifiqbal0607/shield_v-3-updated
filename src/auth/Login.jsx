@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { EyeIcon, EyeOffIcon, AlertIcon, MailIcon } from "../components/ui/Icons";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Authentication/Login.jsx
@@ -103,7 +104,7 @@ function LoginForm({ onLogin, onForgot }) {
 
       {error && (
         <div className="login-alert err">
-          <span>⚠</span> {error}
+          <AlertIcon size={15} /> {error}
         </div>
       )}
 
@@ -142,7 +143,7 @@ function LoginForm({ onLogin, onForgot }) {
             type="button"
             aria-label="Toggle password visibility"
           >
-            {showPw ? "🙈" : "👁️"}
+            {showPw ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
           </button>
         </div>
       </div>
@@ -204,7 +205,7 @@ function ForgotForm({ onBack }) {
         <button className="login-back-btn" onClick={onBack} type="button">
           ← Back to sign in
         </button>
-        <div className="login-success-icon">✉️</div>
+        <div className="login-success-icon"><MailIcon size={40} /></div>
         <div className="login-card-header">
           <h2 className="login-card-title">Check your inbox</h2>
           <p className="login-card-sub">
@@ -235,7 +236,7 @@ function ForgotForm({ onBack }) {
 
       {error && (
         <div className="login-alert err">
-          <span>⚠</span> {error}
+          <AlertIcon size={15} /> {error}
         </div>
       )}
 

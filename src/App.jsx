@@ -4,6 +4,7 @@ import PageRouter from "./routes";
 import Login from "./auth/Login";
 import Logout from "./auth/Logout";
 import { useAuth } from "./hooks/useAuth";
+import { TicketProvider } from "./context/TicketContext";
 
 export default function App() {
   const {
@@ -47,20 +48,22 @@ export default function App() {
     );
 
   return (
-    <AppLayout
-      role={role}
-      setRole={(r) => { handleSetRole(r); setPage("overview"); }}
-      page={page}
-      setPage={handleNav}
-      onLogout={() => setShowLogout(true)}
-    >
-      <PageRouter
-        page={page}
+    <TicketProvider>
+      <AppLayout
         role={role}
-        userType={userType}
-        setUserType={setUserType}
+        setRole={(r) => { handleSetRole(r); setPage("overview"); }}
+        page={page}
         setPage={handleNav}
-      />
-    </AppLayout>
+        onLogout={() => setShowLogout(true)}
+      >
+        <PageRouter
+          page={page}
+          role={role}
+          userType={userType}
+          setUserType={setUserType}
+          setPage={handleNav}
+        />
+      </AppLayout>
+    </TicketProvider>
   );
 }

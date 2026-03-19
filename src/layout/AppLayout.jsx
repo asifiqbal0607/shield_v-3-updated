@@ -3,6 +3,7 @@ import TopNav from "./TopNav";
 import FilterSidebar from "./FilterSidebar";
 import { ALL_PAGES } from "../components/constants/nav";
 import { SLATE } from "../components/constants/colors";
+import { FiltersIcon } from "../components/ui/Icons";
 
 /**
  * AppLayout
@@ -94,19 +95,7 @@ export default function AppLayout({
                 "--fb-clr": sidebarOpen ? "#1d4ed8" : "var(--text-3)",
               }}
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              >
-                <line x1="2" y1="4" x2="14" y2="4" />
-                <line x1="4" y1="8" x2="12" y2="8" />
-                <line x1="6" y1="12" x2="10" y2="12" />
-              </svg>
+              <FiltersIcon size={14} />
               Filters
             </button>
           </div>

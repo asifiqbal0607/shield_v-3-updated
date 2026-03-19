@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { SearchIcon, CloseIcon, EyeIcon, CheckIcon, SaveIcon, ArrowLeftIcon, EditIcon, FileTextIcon } from "../components/ui/Icons";
 
 const T = "#0d9488";
 
@@ -201,15 +202,11 @@ export function FraudDescriptionsModal({ onClose }) {
           </div>
           <div className="fc-row-gap10">
             <div className="fc-modal-search">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-              </svg>
+              <SearchIcon size={14} />
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search codes, titles…" autoFocus />
             </div>
             <button className="fc-modal-close" onClick={onClose}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M18 6 6 18M6 6l12 12"/>
-              </svg>
+              <CloseIcon size={16} />
             </button>
           </div>
         </div>
@@ -307,16 +304,11 @@ function MapForm({ onViewAll }) {
         {/* Top bar */}
         <div className="fc-card-topbar">
           <button className="fc-btn fc-btn-indigo" onClick={() => setShowDesc(true)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-            </svg>
+            <FileTextIcon size={14} />
             Fraud Descriptions
           </button>
           <button className="fc-btn fc-btn-primary" onClick={onViewAll}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
-            </svg>
+            <EyeIcon size={14} />
             View Fraud Codes
           </button>
         </div>
@@ -376,9 +368,9 @@ function MapForm({ onViewAll }) {
         <div className="fc-form-footer">
           <button className={`fc-btn fc-btn-save${saved ? " fc-btn-saved" : ""}`} onClick={handleSave}>
             {saved ? (
-              <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg> Saved</>
+              <><CheckIcon size={14} /> Saved</>
             ) : (
-              <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Rule</>
+              <><SaveIcon size={14} /> Save Rule</>
             )}
           </button>
         </div>
@@ -414,15 +406,11 @@ function ViewAll({ onBack }) {
         </div>
         <div className="fc-modal-actions">
           <div className="fc-modal-search fc-modal-search-wrap">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2.5">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
+            <SearchIcon size={13} />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search codes…" className="fc-search-input" />
           </div>
           <button className="fc-btn fc-btn-outline" onClick={onBack}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M19 12H5m7-7-7 7 7 7"/>
-            </svg>
+            <ArrowLeftIcon size={13} />
             Back
           </button>
         </div>
@@ -461,10 +449,7 @@ function ViewAll({ onBack }) {
               )}
               <div className="fc-list-swatch" style={{ "--c": code.color }} />
               <span className="fc-list-edit" onClick={(e) => e.stopPropagation()}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
+                <EditIcon size={13} />
               </span>
               {code.children?.length > 0 && (
                 <span className={`fc-list-chevron${expanded[code.id] ? " open" : ""}`}>▼</span>
@@ -480,10 +465,7 @@ function ViewAll({ onBack }) {
                 </span>
                 <div className="fc-list-swatch fc-child-swatch" style={{ "--c": child.color }} />
                 <span className="fc-list-edit">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
+                  <EditIcon size={12} />
                 </span>
               </div>
             ))}
@@ -508,10 +490,7 @@ function PartnerDescriptions() {
           View the full reference guide for all Shield fraud detection codes and their descriptions.
         </p>
         <button className="fc-btn fc-btn-indigo" onClick={() => setShowDesc(true)}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-          </svg>
+          <FileTextIcon size={14} />
           View Fraud Descriptions
         </button>
       </div>

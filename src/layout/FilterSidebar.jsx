@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SearchIcon } from "../components/ui/Icons";
 
 const FILTER_OPTIONS = [
   "Choose Service",
@@ -63,11 +64,7 @@ export default function FilterSidebar({ role, setRole, setPage, onSearch }) {
           <label className="fsb-label-lg">Search</label>
           <div className="sidebar-search-wrap">
             <span className="sidebar-search-icon">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
+              <SearchIcon size={13} />
             </span>
             <input
               type="text"
@@ -87,11 +84,7 @@ export default function FilterSidebar({ role, setRole, setPage, onSearch }) {
             className={`sidebar-search-apply-btn${search.trim() ? " sidebar-search-apply-btn--active" : ""}`}
             onClick={handleSearchApply}
             disabled={!search.trim()}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
+            <SearchIcon size={12} />
             Search Transactions
           </button>
         </div>

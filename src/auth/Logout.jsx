@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LockIcon } from "../components/ui/Icons";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    Authentication/Logout.jsx
@@ -35,7 +36,7 @@ export default function Logout({ role, onConfirm, onCancel }) {
         <div className="logout-logo">S</div>
 
         {/* Icon */}
-        <div className="logout-icon-wrap">🔒</div>
+        <div className="logout-icon-wrap"><LockIcon size={32} /></div>
 
         <h2 className="logout-title">Sign out of Shield?</h2>
         <p className="logout-sub">

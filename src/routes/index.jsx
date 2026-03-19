@@ -15,6 +15,7 @@ import PageStub from "../pages/Stub";
 import PagePasswordGenerator from "../pages/PasswordGenerator";
 import PagePartners from "../pages/Partners";
 import Trafficsources from "../pages/TrafficSources";
+import PageSupport from "../pages/Support";
 
 const ALIASES = {
   "users-all": "users",
@@ -69,6 +70,7 @@ export default function PageRouter({
     "password-generator": <PagePasswordGenerator />,
     "ip-manager": <PageIPManager role={role} />,
     "traffic-sources": <Trafficsources />,
+    "support": <PageSupport role={role} />,
   };
 
   return ROUTES[key] ?? <PageOverview role={role} setPage={setPage} />;

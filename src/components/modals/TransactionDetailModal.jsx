@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { ReportIssueModal } from "../../pages/Support";
 
 // ── Event template — all test names used per event type ──────────────────────
 const EVENT_TEMPLATES = [
@@ -728,6 +729,7 @@ export default function TransactionDetailModal({
   const [activeTab, setActiveTab] = useState("info"); // "info" | "device" | "events"
   const [devTab, setDevTab] = useState("UI Rendering");
   const [expandedSeq, setExpandedSeq] = useState(null); // which click group is open
+  const [showReport, setShowReport] = useState(false);
   const [expandedEvt, setExpandedEvt] = useState(null);
   const [showRaw, setShowRaw] = useState(false);
 
@@ -900,6 +902,16 @@ export default function TransactionDetailModal({
               )}
             </button>
           ))}
+          {isPartner && (
+            <button
+              type="button"
+              className="tdd-section-tab tdd-section-tab-report"
+              onClick={() => setShowReport(true)}
+            >
+              <span className="tdd-section-tab-dot tdd-dot-rose" />
+              Report
+            </button>
+          )}
         </div>
 
         {/* ── Tab Body ── */}
@@ -1500,6 +1512,14 @@ export default function TransactionDetailModal({
           />,
           document.body,
         )}
+
+      {showReport && (
+        <ReportIssueModal
+          prefillTransactionId={d.transactionId}
+          partnerName="Partner"
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </>
   );
 }
