@@ -23266,6 +23266,76 @@ table tbody td {
   height: 100%;
   display: flex;
   align-items: flex-end;
+  position: relative;
+}
+.ov2-heatmap-col.is-hovered .ov2-heatmap-bar {
+  opacity: 1;
+  background: rgba(22, 82, 200, 0.95);
+}
+
+/* ── Heatmap tooltip ── */
+.ov2-heatmap-tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--navy);
+  border-radius: 10px;
+  padding: 10px 12px;
+  min-width: 148px;
+  box-shadow: var(--shadow-lg);
+  z-index: 20;
+  pointer-events: none;
+}
+/* Arrow */
+.ov2-heatmap-tip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--navy);
+}
+.ov2-heatmap-tip-hour {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 7px;
+  font-family: var(--font-mono);
+}
+.ov2-heatmap-tip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.ov2-heatmap-tip-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  font-weight: 500;
+}
+.ov2-heatmap-tip-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  font-family: var(--font-mono);
+}
+.ov2-heatmap-tip-track {
+  margin-top: 8px;
+  height: 3px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.ov2-heatmap-tip-fill {
+  height: 100%;
+  width: var(--w, 0%);
+  background: var(--color-primary);
+  border-radius: 99px;
 }
 .ov2-heatmap-bar {
   width: 100%;
@@ -23588,4 +23658,40 @@ table tbody td {
   font-weight: 700;
   color: #fff;
   font-family: var(--font-mono);
+}
+/* ── Transaction Context step (Step 1) ─────────────────────────────────── */
+.spt-yesno-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.spt-yesno-btn {
+  padding: 7px 22px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-3);
+  font-size: var(--text-base);
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.spt-yesno-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.spt-yesno-btn--active {
+  border-color: var(--color-primary);
+  background: #e8effe;
+  color: var(--color-primary);
+}
+
+.spt-field--indent {
+  margin-left: 16px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
 }
