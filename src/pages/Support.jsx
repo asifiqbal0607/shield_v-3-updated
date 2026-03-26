@@ -115,39 +115,30 @@ export function ReportIssueModal({ onClose, prefillTransactionId = null, partner
   const [submitted,   setSubmitted]   = useState(false);
   const [errors,      setErrors]      = useState({});
 
-  // Transaction context fields (shown before submitting)
-  const [step,             setStep]             = useState(1); // 1 = context, 2 = ticket form
-  const [isHumanTest,      setIsHumanTest]      = useState(null);   // true | false | null
+  // Transaction context fields — only required when category === "blocked-testing"
+  const [isHumanTest,      setIsHumanTest]      = useState(null);
   const [testerName,       setTesterName]       = useState("");
-  const [remoteControl,    setRemoteControl]    = useState(null);   // true | false | null
+  const [remoteControl,    setRemoteControl]    = useState(null);
   const [deviceUsed,       setDeviceUsed]       = useState("");
-  const [establishedMerch, setEstablishedMerch] = useState(null);   // true | false | null
+  const [establishedMerch, setEstablishedMerch] = useState(null);
   const [landingPageUrl,   setLandingPageUrl]   = useState("");
-  const [ctxErrors,        setCtxErrors]        = useState({});
 
-  const showUniqId = category === "blocked-testing";
-
-  function validateContext() {
-    const e = {};
-    if (isHumanTest === null)     e.isHumanTest      = "Please select an option";
-    if (isHumanTest && !testerName.trim()) e.testerName = "Please enter the tester's name";
-    if (remoteControl === null)   e.remoteControl    = "Please select an option";
-    if (!deviceUsed.trim())       e.deviceUsed       = "Please specify the device";
-    if (establishedMerch === null) e.establishedMerch = "Please select an option";
-    if (!landingPageUrl.trim())   e.landingPageUrl   = "Please provide the landing page URL";
-    setCtxErrors(e);
-    return !Object.keys(e).length;
-  }
-
-  function handleContextNext() {
-    if (validateContext()) setStep(2);
-  }
+  const showUniqId      = category === "blocked-testing";
+  const showTxContext   = category === "blocked-testing";
 
   function validate() {
     const e = {};
     if (!category)           e.category    = "Please select an issue type";
     if (!subject.trim())     e.subject     = "Subject is required";
     if (!description.trim()) e.description = "Description is required";
+    if (showTxContext) {
+      if (isHumanTest === null)                      e.isHumanTest      = "Please select an option";
+      if (isHumanTest && !testerName.trim())         e.testerName       = "Please enter the tester's name";
+      if (remoteControl === null)                    e.remoteControl    = "Please select an option";
+      if (!deviceUsed.trim())                        e.deviceUsed       = "Please specify the device";
+      if (establishedMerch === null)                 e.establishedMerch = "Please select an option";
+      if (!landingPageUrl.trim())                    e.landingPageUrl   = "Please provide the landing page URL";
+    }
     setErrors(e);
     return !Object.keys(e).length;
   }
@@ -162,16 +153,17 @@ export function ReportIssueModal({ onClose, prefillTransactionId = null, partner
       `Issue Type: ${catLabel}`,
       `Priority: ${priLabel}`,
       ...(showUniqId && uniqId ? [`Transaction UniqueID: ${uniqId}`] : []),
+      ...(showTxContext ? [
+        "",
+        "── Transaction Context ──",
+        `Verified Human Test: ${isHumanTest ? "Yes" : "No"}`,
+        ...(isHumanTest ? [`Tester: ${testerName}`] : []),
+        `Remote Control Software: ${remoteControl ? "Yes" : "No"}`,
+        `Device Used: ${deviceUsed}`,
+        `Established Merchant: ${establishedMerch ? "Yes" : "No"}`,
+        `Landing Page URL: ${landingPageUrl}`,
+      ] : []),
       "",
-      "── Transaction Context ──",
-      `Verified Human Test: ${isHumanTest ? "Yes" : "No"}`,
-      ...(isHumanTest ? [`Tester: ${testerName}`] : []),
-      `Remote Control Software: ${remoteControl ? "Yes" : "No"}`,
-      `Device Used: ${deviceUsed}`,
-      `Established Merchant: ${establishedMerch ? "Yes" : "No"}`,
-      `Landing Page URL: ${landingPageUrl}`,
-      "",
-      "── Ticket Details ──",
       `Subject: ${subject}`,
       "",
       "Description:",
@@ -197,112 +189,6 @@ export function ReportIssueModal({ onClose, prefillTransactionId = null, partner
             </div>
             <button onClick={onClose} className="spt-submit-btn" type="button">Close</button>
           </div>
-        ) : step === 1 ? (
-          /* ── Step 1: Transaction Context ── */
-          <>
-            <div className="spt-modal-header">
-              <div>
-                <div className="spt-modal-title">Transaction Context</div>
-                <div className="spt-modal-sub">Before reporting, please help us understand the transaction.</div>
-              </div>
-              <button onClick={onClose} className="spt-modal-close-btn" type="button">×</button>
-            </div>
-
-            <div className="spt-modal-body">
-
-              {/* Q1: Human test? */}
-              <div className="spt-field">
-                <label className="spt-label">Is this a verified human test? <span className="spt-required">*</span></label>
-                <div className="spt-yesno-row">
-                  {[{ val: true, label: "Yes" }, { val: false, label: "No" }].map(({ val, label }) => (
-                    <button key={String(val)} type="button"
-                      className={`spt-yesno-btn${isHumanTest === val ? " spt-yesno-btn--active" : ""}`}
-                      onClick={() => { setIsHumanTest(val); setCtxErrors((e) => ({ ...e, isHumanTest: null, testerName: null })); }}
-                    >{label}</button>
-                  ))}
-                </div>
-                {ctxErrors.isHumanTest && <span className="spt-err-msg">{ctxErrors.isHumanTest}</span>}
-              </div>
-
-              {/* Q1b: Who is testing (conditional) */}
-              {isHumanTest && (
-                <div className="spt-field spt-field--indent">
-                  <label className="spt-label">Who is doing the testing? <span className="spt-required">*</span></label>
-                  <input
-                    value={testerName}
-                    onChange={(e) => { setTesterName(e.target.value); setCtxErrors((v) => ({ ...v, testerName: null })); }}
-                    placeholder="e.g. John Smith / QA Team"
-                    className={`spt-input${ctxErrors.testerName ? " spt-input-err" : ""}`}
-                  />
-                  {ctxErrors.testerName && <span className="spt-err-msg">{ctxErrors.testerName}</span>}
-                </div>
-              )}
-
-              {/* Q2: Remote control software */}
-              <div className="spt-field">
-                <label className="spt-label">Is any remote control software being used? <span className="spt-required">*</span></label>
-                <div className="spt-yesno-row">
-                  {[{ val: true, label: "Yes" }, { val: false, label: "No" }].map(({ val, label }) => (
-                    <button key={String(val)} type="button"
-                      className={`spt-yesno-btn${remoteControl === val ? " spt-yesno-btn--active" : ""}`}
-                      onClick={() => { setRemoteControl(val); setCtxErrors((e) => ({ ...e, remoteControl: null })); }}
-                    >{label}</button>
-                  ))}
-                </div>
-                {ctxErrors.remoteControl && <span className="spt-err-msg">{ctxErrors.remoteControl}</span>}
-              </div>
-
-              {/* Q3: Device used */}
-              <div className="spt-field">
-                <label className="spt-label">What device was used? <span className="spt-required">*</span></label>
-                <input
-                  value={deviceUsed}
-                  onChange={(e) => { setDeviceUsed(e.target.value); setCtxErrors((v) => ({ ...v, deviceUsed: null })); }}
-                  placeholder="e.g. iPhone 15, Samsung Galaxy S23, Chrome on Windows…"
-                  className={`spt-input${ctxErrors.deviceUsed ? " spt-input-err" : ""}`}
-                />
-                {ctxErrors.deviceUsed && <span className="spt-err-msg">{ctxErrors.deviceUsed}</span>}
-              </div>
-
-              {/* Q4: Established merchant */}
-              <div className="spt-field">
-                <label className="spt-label">
-                  Is this transaction from an established merchant that already understands the integration with Shield?{" "}
-                  <span className="spt-required">*</span>
-                </label>
-                <div className="spt-yesno-row">
-                  {[{ val: true, label: "Yes" }, { val: false, label: "No" }].map(({ val, label }) => (
-                    <button key={String(val)} type="button"
-                      className={`spt-yesno-btn${establishedMerch === val ? " spt-yesno-btn--active" : ""}`}
-                      onClick={() => { setEstablishedMerch(val); setCtxErrors((e) => ({ ...e, establishedMerch: null })); }}
-                    >{label}</button>
-                  ))}
-                </div>
-                {ctxErrors.establishedMerch && <span className="spt-err-msg">{ctxErrors.establishedMerch}</span>}
-              </div>
-
-              {/* Q5: Landing page URL */}
-              <div className="spt-field">
-                <label className="spt-label">What is the landing page URL? <span className="spt-required">*</span></label>
-                <input
-                  value={landingPageUrl}
-                  onChange={(e) => { setLandingPageUrl(e.target.value); setCtxErrors((v) => ({ ...v, landingPageUrl: null })); }}
-                  placeholder="https://…"
-                  className={`spt-input${ctxErrors.landingPageUrl ? " spt-input-err" : ""}`}
-                  type="url"
-                />
-                {ctxErrors.landingPageUrl && <span className="spt-err-msg">{ctxErrors.landingPageUrl}</span>}
-              </div>
-
-            </div>
-
-            <div className="spt-modal-footer">
-              <button onClick={onClose} className="spt-cancel-btn" type="button">Cancel</button>
-              <button onClick={handleContextNext} type="button" className="spt-submit-btn">
-                Continue →
-              </button>
-            </div>
-          </>
         ) : (
           <>
             <div className="spt-modal-header">
@@ -321,7 +207,15 @@ export function ReportIssueModal({ onClose, prefillTransactionId = null, partner
                   {ISSUE_TYPES.map((t) => (
                     <button key={t.key} type="button"
                       className={`spt-cat-btn${category === t.key ? " spt-cat-btn--active" : ""}`}
-                      onClick={() => { setCategory(t.key); setErrors((e) => ({ ...e, category: null })); }}
+                      onClick={() => {
+                        setCategory(t.key);
+                        setErrors((e) => ({ ...e, category: null }));
+                        // Reset context fields when switching away from blocked-testing
+                        if (t.key !== "blocked-testing") {
+                          setIsHumanTest(null); setTesterName(""); setRemoteControl(null);
+                          setDeviceUsed(""); setEstablishedMerch(null); setLandingPageUrl("");
+                        }
+                      }}
                     >
                       <span className="spt-cat-icon">{t.icon}</span>
                       <span className="spt-cat-label">{t.label}</span>
@@ -331,20 +225,103 @@ export function ReportIssueModal({ onClose, prefillTransactionId = null, partner
                 {errors.category && <span className="spt-err-msg">{errors.category}</span>}
               </div>
 
-              {/* UniqueID — only for Blocked During Testing */}
-              {showUniqId && (
-                <div className="spt-field">
-                  <label className="spt-label">Transaction UniqueID</label>
-                  <input
-                    value={uniqId}
-                    onChange={(e) => setUniqId(e.target.value)}
-                    placeholder="e.g. UUID-ZA-83742"
-                    className={`spt-input${prefillTransactionId ? " spt-input-linked" : ""}`}
-                    readOnly={!!prefillTransactionId}
-                  />
-                  {prefillTransactionId && (
-                    <span className="spt-field-hint">🔗 Auto-linked from transaction</span>
-                  )}
+              {/* ── Transaction Context — only for Blocked During Testing ── */}
+              {showTxContext && (
+                <div className="spt-tx-context-block">
+                  <div className="spt-tx-context-header">
+                    <span className="spt-tx-context-icon">🔍</span>
+                    <div>
+                      <div className="spt-tx-context-title">Transaction Context</div>
+                      <div className="spt-tx-context-sub">Help us investigate by answering a few quick questions.</div>
+                    </div>
+                  </div>
+
+                  {/* UniqueID */}
+                  <div className="spt-field">
+                    <label className="spt-label">Transaction UniqueID</label>
+                    <input
+                      value={uniqId}
+                      onChange={(e) => setUniqId(e.target.value)}
+                      placeholder="e.g. UUID-ZA-83742"
+                      className={`spt-input${prefillTransactionId ? " spt-input-linked" : ""}`}
+                      readOnly={!!prefillTransactionId}
+                    />
+                    {prefillTransactionId && (
+                      <span className="spt-field-hint">🔗 Auto-linked from transaction</span>
+                    )}
+                  </div>
+
+                  {/* Q1: Human test? */}
+                  <div className="spt-field">
+                    <label className="spt-label">Is this a verified human test? <span className="spt-required">*</span></label>
+                    <div className="spt-yesno-row">
+                      {[{ val: true, label: "Yes" }, { val: false, label: "No" }].map(({ val, label }) => (
+                        <button key={String(val)} type="button"
+                          className={`spt-yesno-btn${isHumanTest === val ? " spt-yesno-btn--active" : ""}`}
+                          onClick={() => { setIsHumanTest(val); setErrors((e) => ({ ...e, isHumanTest: null, testerName: null })); }}
+                        >{label}</button>
+                      ))}
+                    </div>
+                    {errors.isHumanTest && <span className="spt-err-msg">{errors.isHumanTest}</span>}
+                  </div>
+
+                 
+
+                  {/* Q2: Remote control software */}
+                  <div className="spt-field">
+                    <label className="spt-label">Is any remote control software being used? <span className="spt-required">*</span></label>
+                    <div className="spt-yesno-row">
+                      {[{ val: true, label: "Yes" }, { val: false, label: "No" }].map(({ val, label }) => (
+                        <button key={String(val)} type="button"
+                          className={`spt-yesno-btn${remoteControl === val ? " spt-yesno-btn--active" : ""}`}
+                          onClick={() => { setRemoteControl(val); setErrors((e) => ({ ...e, remoteControl: null })); }}
+                        >{label}</button>
+                      ))}
+                    </div>
+                    {errors.remoteControl && <span className="spt-err-msg">{errors.remoteControl}</span>}
+                  </div>
+
+                  {/* Q3: Device used */}
+                  <div className="spt-field">
+                    <label className="spt-label">What device was used? <span className="spt-required">*</span></label>
+                    <input
+                      value={deviceUsed}
+                      onChange={(e) => { setDeviceUsed(e.target.value); setErrors((v) => ({ ...v, deviceUsed: null })); }}
+                      placeholder="e.g. iPhone 15, Samsung Galaxy S23, Chrome on Windows…"
+                      className={`spt-input${errors.deviceUsed ? " spt-input-err" : ""}`}
+                    />
+                    {errors.deviceUsed && <span className="spt-err-msg">{errors.deviceUsed}</span>}
+                  </div>
+
+                  {/* Q4: Established merchant */}
+                  <div className="spt-field">
+                    <label className="spt-label">
+                      Is this from an established merchant that already understands the integration with Shield?{" "}
+                      <span className="spt-required">*</span>
+                    </label>
+                    <div className="spt-yesno-row">
+                      {[{ val: true, label: "Yes" }, { val: false, label: "No" }].map(({ val, label }) => (
+                        <button key={String(val)} type="button"
+                          className={`spt-yesno-btn${establishedMerch === val ? " spt-yesno-btn--active" : ""}`}
+                          onClick={() => { setEstablishedMerch(val); setErrors((e) => ({ ...e, establishedMerch: null })); }}
+                        >{label}</button>
+                      ))}
+                    </div>
+                    {errors.establishedMerch && <span className="spt-err-msg">{errors.establishedMerch}</span>}
+                  </div>
+
+                  {/* Q5: Landing page URL */}
+                  <div className="spt-field">
+                    <label className="spt-label">What is the landing page URL? <span className="spt-required">*</span></label>
+                    <input
+                      value={landingPageUrl}
+                      onChange={(e) => { setLandingPageUrl(e.target.value); setErrors((v) => ({ ...v, landingPageUrl: null })); }}
+                      placeholder="https://…"
+                      className={`spt-input${errors.landingPageUrl ? " spt-input-err" : ""}`}
+                      type="url"
+                    />
+                    {errors.landingPageUrl && <span className="spt-err-msg">{errors.landingPageUrl}</span>}
+                  </div>
                 </div>
               )}
 
@@ -392,7 +369,7 @@ export function ReportIssueModal({ onClose, prefillTransactionId = null, partner
             </div>
 
             <div className="spt-modal-footer">
-              <button onClick={() => setStep(1)} className="spt-cancel-btn" type="button">← Back</button>
+              <button onClick={onClose} className="spt-cancel-btn" type="button">Cancel</button>
               <button onClick={handleSubmit} type="button" className="spt-submit-btn">
                 <SendIcon size={13} />
                 Submit Ticket
