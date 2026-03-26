@@ -172,6 +172,22 @@ const BLOCK_REASONS = buildBlockReasons();
 const CHANNEL_DATA  = buildChannelData();
 const FRAUD_SCORE   = buildFraudScore();
 
+// ── Colour → CSS class (replaces all style={{ "--c": color }} inline styles) ──
+const COLOR_CLASS = {
+  "#22c55e": "cc-green",
+  "#3b82f6": "cc-blue",
+  "#f59e0b": "cc-amber",
+  "#8b5cf6": "cc-purple",
+  "#0ea5e9": "cc-sky",
+  "#ef4444": "cc-red",
+  "#10b981": "cc-emerald",
+  "#ec4899": "cc-pink",
+  "#06b6d4": "cc-cyan2",
+  "#f97316": "cc-orange",
+  "#16a34a": "cc-dkgreen",
+  "#cbd5e1": "cc-slate",
+};
+
 const RANGE_LABELS = {
   "1d":  "Today · hourly",
   "7d":  "Last 7 days",
@@ -207,7 +223,7 @@ function KpiCard({ card, onClick }) {
   const up = card.change > 0;
   return (
     <div className="ov2-kpi-card" onClick={onClick}>
-      <div className="ov2-kpi-accent" style={{ "--c": card.color }} />
+      <div className={`ov2-kpi-accent ${COLOR_CLASS[card.color]}`} />
       <div className="ov2-kpi-top">
         <span className="ov2-kpi-label">{card.label}</span>
         <div className="ov2-kpi-info" onClick={(e) => { e.stopPropagation(); setTipOpen(t => !t); }}>
@@ -215,7 +231,7 @@ function KpiCard({ card, onClick }) {
           {tipOpen && <div className="ov2-kpi-tip">{INFO_TIPS[card.label]}</div>}
         </div>
       </div>
-      <div className="ov2-kpi-value" style={{ "--c": card.color }}>{card.value}</div>
+      <div className={`ov2-kpi-value ${COLOR_CLASS[card.color]}`}>{card.value}</div>
       <div className="ov2-kpi-compare">
         <span className="ov2-kpi-prev-lbl">Yesterday</span>
         <span className="ov2-kpi-prev-val">{card.prevValue}</span>
@@ -243,7 +259,7 @@ function AreaTip({ active, payload, label }) {
       <div className="ov2-tooltip-label">{label}</div>
       {payload.map(p => (
         <div key={p.dataKey} className="ov2-tooltip-row">
-          <span className="ov2-tooltip-dot" style={{ "--c": p.color }} />
+          <span className={`ov2-tooltip-dot ${COLOR_CLASS[p.color] ?? ""}`} />
           <span className="ov2-tooltip-key">{p.name}</span>
           <span className="ov2-tooltip-val">{p.value?.toLocaleString()}</span>
         </div>
@@ -257,42 +273,54 @@ function BlockDonut({ data, filterScale }) {
   const R = 48, cx = 60, cy = 60, sw = 11;
   const circ = 2 * Math.PI * R;
   const total = data.reduce((s, d) => s + d.value, 0);
+
+  // Pre-compute all segment geometry so we can build the scoped <style> block
   let cum = 0;
+  const segments = data.map((d, i) => {
+    const frac = d.value / total;
+    const dash = Math.max(0, frac * circ - 2);
+    const rot  = cum * 360 - 90;
+    cum += frac;
+    return { ...d, i, dash, rot };
+  });
+
   const todayBlocked = ALL_PARTNERS.reduce((acc, p) => acc + getDayStats(p, 0).blocked, 0);
   const totalBlocks = Math.round(todayBlocked * filterScale);
+
   return (
     <div className="ov2-donut-wrap">
+      {/* Scoped dynamic values — rotation angle and bar width can't live in global.css
+          because they're computed from data at runtime */}
+      <style>{segments.map(s =>
+        `.ov2-arc-${s.i}{--rot:${s.rot}deg;stroke-dasharray:${s.dash} ${circ};}` +
+        `.ov2-bar-${s.i}{--w:${s.value}%;}`
+      ).join('')}</style>
+
       <div className="ov2-donut-chart">
         <svg viewBox="0 0 120 120" className="ov2-donut-svg">
           <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--bg-subtle)" strokeWidth={sw} />
-          {data.map((d) => {
-            const frac = d.value / total;
-            const dash = Math.max(0, frac * circ - 2);
-            const rot  = cum * 360 - 90;
-            cum += frac;
-            return (
-              <circle key={d.name} cx={cx} cy={cy} r={R}
-                fill="none" stroke={d.color} strokeWidth={sw}
-                strokeDasharray={`${dash} ${circ}`}
-                strokeLinecap="round"
-                style={{ transform: `rotate(${rot}deg)`, transformOrigin: `${cx}px ${cy}px` }} />
-            );
-          })}
+          {segments.map((seg) => (
+            <circle key={seg.name} cx={cx} cy={cy} r={R}
+              fill="none" stroke={seg.color} strokeWidth={sw}
+              strokeLinecap="round"
+              className={`ov2-donut-arc ov2-arc-${seg.i}`} />
+          ))}
           <text x={cx} y={cy - 5} textAnchor="middle" className="ov2-donut-num">
             {(totalBlocks / 1000).toFixed(0)}K
           </text>
           <text x={cx} y={cy + 10} textAnchor="middle" className="ov2-donut-sub">blocks</text>
         </svg>
       </div>
+
       <div className="ov2-donut-legend">
-        {data.map(d => (
-          <div key={d.name} className="ov2-donut-row">
-            <span className="ov2-donut-dot" style={{ "--c": d.color }} />
-            <span className="ov2-donut-name">{d.name}</span>
+        {segments.map((seg, i) => (
+          <div key={seg.name} className="ov2-donut-row">
+            <span className={`ov2-donut-dot ${COLOR_CLASS[seg.color] ?? ""}`} />
+            <span className="ov2-donut-name">{seg.name}</span>
             <span className="ov2-donut-bar-wrap">
-              <span className="ov2-donut-bar" style={{ "--w": `${d.value}%`, "--c": d.color }} />
+              <span className={`ov2-donut-bar ov2-bar-${i}`} />
             </span>
-            <span className="ov2-donut-pct">{d.value}%</span>
+            <span className="ov2-donut-pct">{seg.value}%</span>
           </div>
         ))}
       </div>
@@ -349,7 +377,7 @@ export default function PageOverview({
           </button>
           <div className="ov-service-meta">
             <span className="ov-service-id">{service.serviceId}</span>
-            <span className="ov-service-status" style={{ "--c": service.status === "active" ? "#16a34a" : "#f59e0b" }}>
+            <span className={`ov-service-status ${service.status === "active" ? "cc-dkgreen" : "cc-amber"}`}>
               {service.status?.toUpperCase()}
             </span>
           </div>
@@ -362,15 +390,6 @@ export default function PageOverview({
           </div>
         </div>
       )}
-
-      {/* ── Page header ── */}
-      <div className="ov2-page-header">
-        <div>
-          <h1 className="ov2-page-title">Overview</h1>
-          <div className="ov2-page-sub">Real-time transaction intelligence</div>
-        </div>
-
-      </div>
 
       {/* ── KPI row ── */}
       <div className="ov2-kpi-row">
@@ -418,12 +437,10 @@ export default function PageOverview({
                 { key: "visits",  label: "Visits",   color: "#3b82f6" },
               ].map(s => (
                 <button key={s.key}
-                  className={`ov2-series-btn${seriesVis[s.key] ? " on" : ""}`}
-                  style={{ "--c": s.color }}
+                  className={`ov2-series-btn${seriesVis[s.key] ? " on" : ""} ${COLOR_CLASS[s.color]}`}
                   onClick={() => setSeriesVis(v => ({ ...v, [s.key]: !v[s.key] }))}
                 >
-                  <span className="ov2-series-dot"
-                    style={{ "--c": seriesVis[s.key] ? s.color : "#cbd5e1" }} />
+                  <span className={`ov2-series-dot ${COLOR_CLASS[seriesVis[s.key] ? s.color : "#cbd5e1"]}`} />
                   {s.label}
                 </button>
               ))}

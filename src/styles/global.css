@@ -23393,7 +23393,7 @@ table tbody td {
   stroke-width: 2.5;
   stroke-linecap: round;
 }
-.ov2-gauge-needle-pivot { }
+
 
 .ov2-gauge-wrap--clean   .ov2-gauge-needle,
 .ov2-gauge-wrap--clean   .ov2-gauge-needle-pivot { stroke: var(--color-success); fill: var(--color-success); }
@@ -23736,4 +23736,23 @@ table tbody td {
   font-size: var(--text-sm);
   color: var(--text-3);
   margin-top: 1px;
+}
+/* ══ Overview — dynamic colour palette classes (replaces all --c inline styles) ══ */
+.cc-green   { --c: #22c55e; }
+.cc-blue    { --c: #3b82f6; }
+.cc-amber   { --c: #f59e0b; }
+.cc-purple  { --c: #8b5cf6; }
+.cc-sky     { --c: #0ea5e9; }
+.cc-red     { --c: #ef4444; }
+.cc-emerald { --c: #10b981; }
+.cc-pink    { --c: #ec4899; }
+.cc-cyan2   { --c: #06b6d4; }
+.cc-orange  { --c: #f97316; }
+.cc-dkgreen { --c: #16a34a; }
+.cc-slate   { --c: #cbd5e1; }
+
+/* ── Donut arc: rotation comes via scoped <style> as --rot, origin is a constant ── */
+.ov2-donut-arc {
+  transform: rotate(var(--rot, -90deg));
+  transform-origin: 60px 60px;
 }
