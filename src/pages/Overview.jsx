@@ -309,8 +309,8 @@ export default function PageOverview({
   const isAdmin = role === "admin";
   const [modal,       setModal]       = useState(null);
   const [selectedBar, setSelectedBar] = useState(initialFilter ?? null);
-  const [rangeTab,    setRangeTab]    = useState("1d");
-  const [seriesVis,   setSeriesVis]   = useState({ clean: true, blocked: true, visits: false });
+  const [rangeTab,    setRangeTab]    = useState("7d");
+  const [seriesVis,   setSeriesVis]   = useState({ clean: true, blocked: true, visits: true });
 
   const open  = (title) => setModal(title);
   const close = () => setModal(null);
@@ -335,7 +335,7 @@ export default function PageOverview({
     }));
   }, [rangeTab, filterScale]);
 
-  const TICK = { className: "ov2-axis-tick" };
+  const TICK = { fontSize: 9, fill: "#94a3b8" };
 
   return (
     <div className="ov2-page">
@@ -439,28 +439,22 @@ export default function PageOverview({
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: -18 }}>
                   <defs>
-                    <linearGradient id="ov2gC" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  className="ov2-grad-clean-start" />
-                      <stop offset="95%" className="ov2-grad-clean-end" />
-                    </linearGradient>
-                    <linearGradient id="ov2gB" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  className="ov2-grad-blocked-start" />
-                      <stop offset="95%" className="ov2-grad-blocked-end" />
-                    </linearGradient>
-                    <linearGradient id="ov2gV" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  className="ov2-grad-visits-start" />
-                      <stop offset="95%" className="ov2-grad-visits-end" />
-                    </linearGradient>
+                    {[["ov2gC","#22c55e",0.07],["ov2gB","#ef4444",0.15],["ov2gV","#3b82f6",0.10]].map(([id, col, op]) => (
+                      <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor={col} stopOpacity={op} />
+                        <stop offset="95%" stopColor={col} stopOpacity={0}  />
+                      </linearGradient>
+                    ))}
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="ov2-chart-grid" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis dataKey="d" tick={TICK} axisLine={false} tickLine={false} height={18} />
                   <YAxis tick={TICK} axisLine={false} tickLine={false} width={34}
                     domain={[0, 'dataMax']}
                     tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
                   <Tooltip content={<AreaTip />} />
-                  {seriesVis.visits  && <Area type="monotone" dataKey="visits"  name="Visits"  className="ov2-area-visits"  fill="url(#ov2gV)" dot={false} />}
-                  {seriesVis.clean   && <Area type="monotone" dataKey="clean"   name="Clean"   className="ov2-area-clean"   fill="url(#ov2gC)" dot={false} />}
-                  {seriesVis.blocked && <Area type="monotone" dataKey="blocked" name="Blocked" className="ov2-area-blocked" fill="url(#ov2gB)" dot={false} />}
+                  {seriesVis.visits  && <Area type="monotone" dataKey="visits"  name="Visits"  stroke="#3b82f6" strokeWidth={1.5} fill="url(#ov2gV)" dot={false} />}
+                  {seriesVis.clean   && <Area type="monotone" dataKey="clean"   name="Clean"   stroke="#22c55e" strokeWidth={2}   fill="url(#ov2gC)" dot={false} />}
+                  {seriesVis.blocked && <Area type="monotone" dataKey="blocked" name="Blocked" stroke="#ef4444" strokeWidth={2}   fill="url(#ov2gB)" dot={false} />}
                 </AreaChart>
               </ResponsiveContainer>
           </div>
