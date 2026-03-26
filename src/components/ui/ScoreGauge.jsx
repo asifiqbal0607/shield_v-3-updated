@@ -14,6 +14,12 @@ function describeArc(cx, cy, r, startDeg, endDeg) {
   return `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
 }
 
+const LEGEND = [
+  { key: "clean",   label: "Clean",     cls: "clean"   },
+  { key: "suspect", label: "Low Risk",  cls: "suspect" },
+  { key: "blocked", label: "High Risk", cls: "blocked" },
+];
+
 export default function ScoreGauge({ clean = 0, suspect = 0, blocked = 0 }) {
   const total = (clean + suspect + blocked) || 1;
   const cleanPct   = clean   / total;
@@ -21,14 +27,12 @@ export default function ScoreGauge({ clean = 0, suspect = 0, blocked = 0 }) {
   const blockedPct = blocked / total;
 
   const cx = 110, cy = 110, r = 75;
-  // Arc goes from 180deg (left) to 0deg (right) — total 180deg sweep
   const START = 180, END = 360;
   const SWEEP = END - START;
 
   const cleanEnd   = START + SWEEP * cleanPct;
   const suspectEnd = cleanEnd + SWEEP * suspectPct;
 
-  // Needle angle points to midpoint of dominant segment
   const dominant = cleanPct >= suspectPct && cleanPct >= blockedPct ? "clean"
     : suspectPct >= blockedPct ? "suspect" : "blocked";
 
@@ -41,52 +45,50 @@ export default function ScoreGauge({ clean = 0, suspect = 0, blocked = 0 }) {
   const toRad = d => (d * Math.PI) / 180;
   const needleX = cx + 60 * Math.cos(toRad(needleMid));
   const needleY = cy + 60 * Math.sin(toRad(needleMid));
-  const needleColor = dominant === "clean" ? "#22c55e" : dominant === "suspect" ? "#f59e0b" : "#ef4444";
   const dominantCount = dominant === "clean" ? clean : dominant === "suspect" ? suspect : blocked;
 
+  const vals = { clean, suspect, blocked };
+
   return (
-    <div className="ov2-gauge-wrap">
+    <div className={`ov2-gauge-wrap ov2-gauge-wrap--${dominant}`}>
       <svg viewBox="0 0 220 120" className="ov2-gauge-svg">
-        {/* Background */}
-        <path d={describeArc(cx, cy, r, START, END)} fill="none"
-          stroke="var(--bg-subtle)" strokeWidth={20} strokeLinecap="butt" />
+        {/* Track */}
+        <path d={describeArc(cx, cy, r, START, END)}
+          className="ov2-gauge-arc ov2-gauge-arc--bg" />
 
         {/* Clean */}
         {cleanPct > 0.001 && (
-          <path d={describeArc(cx, cy, r, START, cleanEnd - 0.5)} fill="none"
-            stroke="#22c55e" strokeWidth={20} strokeLinecap="butt" />
+          <path d={describeArc(cx, cy, r, START, cleanEnd - 0.5)}
+            className="ov2-gauge-arc ov2-gauge-arc--clean" />
         )}
         {/* Suspect */}
         {suspectPct > 0.001 && (
-          <path d={describeArc(cx, cy, r, cleanEnd + 0.5, suspectEnd - 0.5)} fill="none"
-            stroke="#f59e0b" strokeWidth={20} strokeLinecap="butt" />
+          <path d={describeArc(cx, cy, r, cleanEnd + 0.5, suspectEnd - 0.5)}
+            className="ov2-gauge-arc ov2-gauge-arc--suspect" />
         )}
         {/* Blocked */}
         {blockedPct > 0.001 && (
-          <path d={describeArc(cx, cy, r, suspectEnd + 0.5, END)} fill="none"
-            stroke="#ef4444" strokeWidth={20} strokeLinecap="butt" />
+          <path d={describeArc(cx, cy, r, suspectEnd + 0.5, END)}
+            className="ov2-gauge-arc ov2-gauge-arc--blocked" />
         )}
 
         {/* Needle */}
         <line x1={cx} y1={cy} x2={needleX} y2={needleY}
-          stroke={needleColor} strokeWidth={2.5} strokeLinecap="round" />
-        <circle cx={cx} cy={cy} r={5} fill={needleColor} />
+          className="ov2-gauge-needle" />
+        <circle cx={cx} cy={cy} r={5}
+          className="ov2-gauge-needle-pivot" />
 
         {/* Count */}
         <text x={cx} y={cy - 10} textAnchor="middle"
-          className="ov2-gauge-num" fill={needleColor}>{fmtNum(dominantCount)}</text>
+          className="ov2-gauge-num">{fmtNum(dominantCount)}</text>
       </svg>
 
       <div className="ov2-gauge-legend">
-        {[
-          { label: "Clean",     color: "#22c55e", val: clean   },
-          { label: "Low Risk",  color: "#f59e0b", val: suspect },
-          { label: "High Risk", color: "#ef4444", val: blocked },
-        ].map(({ label, color, val }) => (
-          <div key={label} className="ov2-gauge-legend-item">
-            <span className="ov2-gauge-legend-dot" style={{ "--c": color }} />
+        {LEGEND.map(({ key, label, cls }) => (
+          <div key={key} className="ov2-gauge-legend-item">
+            <span className={`ov2-gauge-legend-dot ov2-gauge-legend-dot--${cls}`} />
             <span className="ov2-gauge-legend-label">{label}</span>
-            <span className="ov2-gauge-legend-val">{fmtNum(val)}</span>
+            <span className="ov2-gauge-legend-val">{fmtNum(vals[key])}</span>
           </div>
         ))}
       </div>
