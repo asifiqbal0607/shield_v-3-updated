@@ -814,7 +814,6 @@ table tbody td {
 
 .ov-radar-expand {
   flex: 1;
-  display: flex;
   justify-content: center;
   align-items: center;
 }
@@ -6274,6 +6273,30 @@ table tbody td {
 
 .tdd-tag-service-cyan {
   background: #0891b2;
+}
+
+/* ── Clickable Client / Service tags ── */
+.tdd-clickable-tag {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: opacity 0.15s, box-shadow 0.15s, transform 0.1s;
+  user-select: none;
+}
+.tdd-clickable-tag:hover {
+  opacity: 0.85;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  transform: translateY(-1px);
+}
+.tdd-clickable-tag:active {
+  transform: translateY(0);
+  opacity: 1;
+}
+.tdd-tag-link-icon {
+  font-size: 10px;
+  opacity: 0.8;
+  line-height: 1;
 }
 
 /* dynamic status pill */
@@ -16663,6 +16686,29 @@ table tbody td {
   color: #0e7490;
 }
 
+/* ── Clickable Client / Service badges in Raw Data Modal ── */
+.rdm-badge-clickable {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.15s, box-shadow 0.15s, transform 0.1s;
+  user-select: none;
+}
+.rdm-badge-clickable:hover {
+  opacity: 0.8;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+.rdm-badge-clickable:active {
+  transform: translateY(0);
+}
+.rdm-badge-link-icon {
+  font-size: 9px;
+  opacity: 0.75;
+  line-height: 1;
+}
+
 .rdm-type-badge {
   display: inline-block;
   padding: 2px 7px;
@@ -22515,3 +22561,992 @@ table tbody td {
 }
 .logout-btn-confirm:hover:not(:disabled) { background: #b91c1c; }
 .logout-btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PARTNER ALERTS  (alert-card, partner-btn-alerts, partner-alert-badge)
+══════════════════════════════════════════════════════════════════════════ */
+
+/* Wider modal variant for alerts */
+.partner-box--alerts {
+  max-width: 620px;
+  width: 100%;
+}
+
+/* ── Alert list ── */
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* ── Alert card ── */
+.alert-card {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.alert-card--on {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(22, 82, 200, 0.07);
+}
+
+/* ── Alert card header (title + toggle) ── */
+.alert-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+}
+.alert-card-left {
+  flex: 1;
+  min-width: 0;
+}
+.alert-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+.alert-card-desc {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+/* ── Alert card body (fields — only shown when enabled) ── */
+.alert-card-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  background: var(--bg-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Manage Alerts button in PartnerModal ── */
+.partner-btn-alerts {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.15s, color 0.15s;
+}
+.partner-btn-alerts:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ── Active alerts badge on table row ── */
+.partner-alert-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #dbeafe;
+  color: #1e40af;
+  white-space: nowrap;
+}
+
+/* ── Alerts tab badge on tab strip ── */
+.ph-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  background: var(--color-warning);
+  color: #fff;
+  margin-left: 6px;
+  line-height: 1;
+}
+
+/* ── Alert rule cells in Alerts tab table ── */
+.alert-rule-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.alert-rule-on {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #dcfce7;
+  color: #15803d;
+  width: fit-content;
+}
+.alert-rule-off {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--bg-subtle);
+  color: var(--text-4);
+}
+.alert-rule-threshold {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+}
+.alert-rule-time {
+  font-size: 10px;
+  color: var(--text-4);
+  font-family: var(--font-mono);
+}
+
+/* ── Mark Inactive button ── */
+.partner-btn-inactive {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1.5px solid #f59e0b;
+  background: transparent;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.15s, color 0.15s;
+}
+.partner-btn-inactive:hover {
+  background: #fef3c7;
+}
+
+/* ── Confirm inactive icon ── */
+.ph-inactive-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fef3c7;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Alert timezone row ── */
+.alert-tz-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  background: var(--bg-subtle);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.alert-tz-row-left {
+  flex: 1;
+  min-width: 0;
+}
+.alert-tz-row-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.alert-tz-row-desc {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.4;
+}
+.alert-tz-select {
+  min-width: 220px;
+  flex-shrink: 0;
+}
+
+/* ── Time field UTC note & hint ── */
+.alert-tz-note {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-4);
+}
+.alert-tz-hint {
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SERVICE TOGGLE STATUS
+══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Confirmation modal body ── */
+.svc-toggle-confirm-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 20px;
+  text-align: center;
+}
+.svc-toggle-confirm-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.svc-toggle-confirm-icon.inactive {
+  background: #fee2e2;
+}
+.svc-toggle-confirm-icon.active {
+  background: #dcfce7;
+}
+.svc-toggle-confirm-msg {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  max-width: 320px;
+}
+.svc-toggle-confirm-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-3);
+  background: var(--bg-subtle);
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+.svc-toggle-id {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-2);
+}
+
+/* ── Modal footer buttons ── */
+.svc-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+.svc-modal-btn-ghost {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.15s;
+}
+.svc-modal-btn-ghost:hover {
+  background: var(--bg-subtle);
+}
+.svc-modal-btn-confirm {
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: opacity 0.15s;
+}
+.svc-modal-btn-confirm.inactive {
+  background: #ef4444;
+  color: #fff;
+}
+.svc-modal-btn-confirm.inactive:hover {
+  opacity: 0.88;
+}
+.svc-modal-btn-confirm.active {
+  background: #22c55e;
+  color: #fff;
+}
+.svc-modal-btn-confirm.active:hover {
+  opacity: 0.88;
+}
+
+/* ── Partner inline toggle button ── */
+.svc-partner-toggle-btn {
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1.5px solid;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.svc-partner-toggle-btn.inactive {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: transparent;
+}
+.svc-partner-toggle-btn.inactive:hover {
+  background: #fee2e2;
+}
+.svc-partner-toggle-btn.active {
+  border-color: #22c55e;
+  color: #15803d;
+  background: transparent;
+}
+.svc-partner-toggle-btn.active:hover {
+  background: #dcfce7;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   OVERVIEW v2  (ov2-*)
+══════════════════════════════════════════════════════════════════════════ */
+
+.ov2-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  padding: var(--page-pad);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* ── Page header ── */
+.ov2-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+.ov2-page-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+}
+.ov2-page-sub {
+  font-size: 11px;
+  color: var(--text-4);
+  font-weight: 600;
+  margin-top: 2px;
+}
+.ov2-range-tabs {
+  display: flex;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ov2-range-tab {
+  padding: 5px 16px;
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.12s, color 0.12s;
+}
+.ov2-range-tab:not(:last-child) { border-right: 1.5px solid var(--border); }
+.ov2-range-tab.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ── KPI row ── */
+.ov2-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--grid-gap);
+}
+@media (max-width: 1280px) { .ov2-kpi-row { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px)  { .ov2-kpi-row { grid-template-columns: repeat(2, 1fr); } }
+
+/* ── KPI card ── */
+.ov2-kpi-card {
+  background: var(--bg-card);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  border: 1.5px solid var(--border);
+  padding: 16px 18px 10px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.15s, transform 0.12s;
+}
+.ov2-kpi-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.ov2-kpi-accent {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--c);
+  border-radius: 4px 4px 0 0;
+}
+.ov2-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.ov2-kpi-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-3);
+}
+.ov2-kpi-info {
+  position: relative;
+  color: var(--text-4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.ov2-kpi-info:hover { color: var(--text-2); }
+.ov2-kpi-tip {
+  position: absolute;
+  right: 0; top: 20px;
+  width: 180px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  line-height: 1.5;
+  z-index: 50;
+  box-shadow: var(--shadow-md);
+}
+.ov2-kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--c, var(--text));
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+/* ── Today vs Yesterday comparison row ── */
+.ov2-kpi-compare {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.ov2-kpi-prev-lbl {
+  font-size: 9px;
+  color: var(--text-4);
+  font-weight: 600;
+}
+.ov2-kpi-prev-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+.ov2-kpi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+}
+.ov2-kpi-badge.up { background: #dcfce7; color: #15803d; }
+.ov2-kpi-badge.dn { background: #fee2e2; color: #b91c1c; }
+
+/* ── Sparkline + legend ── */
+.ov2-kpi-chart-wrap { margin: 0 -4px; }
+.ov2-kpi-spark-legend {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 2px 4px 0;
+}
+.ov2-kpi-spark-today,
+.ov2-kpi-spark-yest {
+  font-size: 8px;
+  color: var(--text-4);
+  font-weight: 600;
+}
+
+/* ── Card header ── */
+.ov2-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.ov2-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.ov2-card-sub {
+  font-size: 10px;
+  color: var(--text-4);
+  margin-top: 2px;
+}
+
+/* ── Series toggle buttons ── */
+.ov2-series-btns {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ov2-series-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-3);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: border-color 0.12s, color 0.12s;
+}
+.ov2-series-btn.on {
+  border-color: var(--c);
+  color: var(--c);
+  background: rgba(0,0,0,0.02);
+}
+.ov2-series-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--c);
+}
+/* ── Chart click area ── */
+.ov2-chart-click {
+  cursor: pointer;
+  transition: opacity 0.1s;
+  overflow: hidden;
+  display: block;
+  line-height: 0;
+  font-size: 0;
+}
+.ov2-chart-click:hover { opacity: 0.9; }
+
+/* ── Row 1: volume chart + side col ── */
+.ov2-top-row {
+  display: flex;
+  flex-direction: row;
+  gap: var(--grid-gap);
+  align-items: flex-start;
+}
+@media (max-width: 1100px) { .ov2-top-row { flex-direction: column; } }
+
+.ov2-top-row > .ov2-card-volume {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 0 !important;
+}
+/* Kill all Recharts wrapper divs inside the volume card */
+.ov2-card-volume .recharts-responsive-container,
+.ov2-card-volume .recharts-wrapper,
+.ov2-card-volume .ov2-chart-click,
+.ov2-card-volume .ov2-chart-click > div {
+  display: block;
+  overflow: hidden;
+  max-height: 220px;
+}
+.ov2-chart-inner {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+}
+.ov2-side-col {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--grid-gap);
+}
+.ov2-side-col > .card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Row 2: radar + right col ── */
+.ov2-row-bottom {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: var(--grid-gap);
+  align-items: stretch;
+}
+@media (max-width: 1100px) { .ov2-row-bottom { grid-template-columns: 1fr; } }
+
+.ov2-radar-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ov2-radar-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-violet);
+  background: #ede9fe;
+  padding: 2px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.ov2-bottom-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--grid-gap);
+}
+.ov2-bottom-right > .card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.ov2-bottom-right > .card > .ov2-donut-wrap,
+.ov2-bottom-right > .card > .ov2-channels {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ── Hourly heatmap ── */
+.ov2-heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.ov2-heatmap-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 70px;
+}
+.ov2-heatmap-col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.ov2-heatmap-bar {
+  width: 100%;
+  min-height: 4px;
+  height: var(--h, 10%);
+  background: rgba(22, 82, 200, var(--o, 0.5));
+  border-radius: 3px 3px 0 0;
+  transition: opacity 0.2s;
+}
+.ov2-heatmap-axis {
+  display: flex;
+  margin-top: 4px;
+}
+.ov2-heatmap-tick-slot {
+  flex: 1;
+  height: 12px;
+  display: flex;
+  align-items: center;
+}
+.ov2-heatmap-tick {
+  font-size: 8px;
+  color: var(--text-4);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+/* ── Gauge ── */
+.ov2-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 6px;
+}
+.ov2-gauge-svg {
+  width: 100%;
+  max-width: 150px;
+  height: auto;
+}
+.ov2-gauge-num {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: var(--font);
+}
+.ov2-gauge-lbl {
+  font-size: 9px;
+  fill: var(--text-4);
+  font-family: var(--font);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.ov2-gauge-risk-badge {
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--c) 25%, transparent);
+}
+
+/* ── Gauge SVG size ── */
+.ov2-gauge-svg {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+}
+
+/* ── Gauge legend ── */
+.ov2-gauge-legend {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.ov2-gauge-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ov2-gauge-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--c);
+}
+.ov2-gauge-legend-label {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 600;
+  flex: 1;
+}
+.ov2-gauge-legend-val {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+/* ── Chart click area ── */
+.ov2-chart-click {
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+.ov2-chart-click:hover { opacity: 0.9; }
+
+/* ── Block donut ── */
+.ov2-donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+.ov2-donut-chart {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ov2-donut-svg {
+  width: 100px;
+  height: 100px;
+}
+.ov2-donut-num {
+  font-size: 14px;
+  font-weight: 800;
+  fill: var(--text);
+  font-family: var(--font);
+}
+.ov2-donut-sub {
+  font-size: 7px;
+  fill: var(--text-4);
+  font-family: var(--font);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.ov2-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.ov2-donut-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ov2-donut-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--c);
+}
+.ov2-donut-name {
+  font-size: 11px;
+  color: var(--text-2);
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ov2-donut-bar-wrap {
+  height: 3px;
+  background: var(--bg-subtle);
+  border-radius: 99px;
+  overflow: hidden;
+  width: 40px;
+}
+.ov2-donut-bar {
+  height: 100%;
+  width: var(--w, 0%);
+  border-radius: 99px;
+  background: var(--c);
+}
+.ov2-donut-pct {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--font-mono);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ── Channels ── */
+.ov2-channels {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.ov2-ch-row {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 5px 6px;
+  border-radius: 7px;
+  transition: background 0.1s;
+}
+.ov2-ch-row:hover { background: var(--bg-subtle); }
+.ov2-ch-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.ov2-ch-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--c);
+}
+.ov2-ch-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ov2-ch-bar-wrap {
+  height: 7px;
+  background: var(--bg-subtle);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.ov2-ch-bar {
+  height: 100%;
+  width: var(--w, 0%);
+  border-radius: 99px;
+  background: var(--c);
+  transition: width 0.3s;
+}
+.ov2-ch-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  min-width: 64px;
+}
+.ov2-ch-ctr {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text);
+}
+.ov2-ch-visits {
+  font-size: 9px;
+  color: var(--text-4);
+  font-family: var(--font-mono);
+}
+
+/* ── Tooltip ── */
+.ov2-tooltip {
+  background: var(--navy);
+  border-radius: 10px;
+  padding: 10px 13px;
+  box-shadow: var(--shadow-lg);
+  min-width: 140px;
+}
+.ov2-tooltip-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 7px;
+}
+.ov2-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+}
+.ov2-tooltip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--c);
+}
+.ov2-tooltip-key {
+  font-size: 11px;
+  color: rgba(255,255,255,0.65);
+  flex: 1;
+}
+.ov2-tooltip-val {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  font-family: var(--font-mono);
+}

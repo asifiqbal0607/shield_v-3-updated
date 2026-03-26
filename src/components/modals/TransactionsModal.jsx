@@ -104,6 +104,7 @@ export default function TransactionsModal({
   title = "Clicked Clean — Transactions",
   ipFilter: initialIp = "",
   role = "admin",
+  setPage: onNavigate,
 }) {
   const [selectedRow, setSelectedRow] = useState(null);
   const [dashMode, setDashMode]       = useState(null);
@@ -390,6 +391,8 @@ export default function TransactionsModal({
           row={selectedRow}
           onClose={() => setSelectedRow(null)}
           role={role}
+          setPage={onNavigate}
+          onParentClose={onClose}
           hasImage={!!selectedRow?.hasImage}
           hasVideo={!!selectedRow?.hasVideo}
           onUserIp={(ip) => {

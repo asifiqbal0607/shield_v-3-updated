@@ -154,10 +154,8 @@ export default function ServicesTrafficChart({
   days = 1,
   onServiceFilter,
   partnerServices,
+  initialName = null,
 }) {
-  const [selected, setSelected] = useState(null);
-  const [page, setPage] = useState(0);
-
   const servicePool = useMemo(() => {
     if (!partnerServices?.length) return ALL_SERVICES;
     return ALL_SERVICES.filter((s) => partnerServices.includes(s.name));
@@ -167,6 +165,24 @@ export default function ServicesTrafficChart({
     () => buildServiceData(days, servicePool),
     [days, servicePool],
   );
+
+  // Resolve initialName → id once so the bar is pre-selected on arrival
+  const initialId = useMemo(() => {
+    if (!initialName) return null;
+    const match = servicePool.find(
+      (s) => s.name.toLowerCase() === initialName.toLowerCase()
+    );
+    return match ? match.id : null;
+  }, [initialName, servicePool]);
+
+  const [selected, setSelected] = useState(initialId);
+  const [page, setPage] = useState(() => {
+    // Jump to the page that contains the pre-selected service
+    if (!initialId) return 0;
+    const idx = allData.findIndex((d) => d.id === initialId);
+    return idx === -1 ? 0 : Math.floor(idx / PAGE_SIZE);
+  });
+
   const totalPages = Math.ceil(allData.length / PAGE_SIZE);
 
   const pageData = useMemo(

@@ -82,21 +82,239 @@ const COUNTRIES = [
 const PARTNER_TYPES   = ["Aggregator","CSP"];
 const AGGREGATOR_LIST = PARTNER_ROWS.filter((p) => p.type === "Aggregator");
 
+/* ── Alert definitions ───────────────────────────────────────────────────── */
+const ALERT_TYPES = [
+  {
+    key: "daily_peak",
+    label: "Daily Peak Alert",
+    desc: "Triggered when transaction volume exceeds the set threshold in a single day.",
+    unit: "transactions",
+    defaultThreshold: 10000,
+    defaultTime: "08:00",
+  },
+  {
+    key: "traffic_spike",
+    label: "Abnormal Traffic Spike Alert",
+    desc: "Triggered when abnormal traffic patterns are detected.",
+    unit: "% spike",
+    defaultThreshold: 30,
+    defaultTime: "08:00",
+  },
+  // {
+  //   key: "block_rate",
+  //   label: "Block Rate Alert",
+  //   desc: "Triggered when the block rate exceeds a set percentage threshold.",
+  //   unit: "% block rate",
+  //   defaultThreshold: 20,
+  //   defaultTime: "08:00",
+  // },
+];
+
+/* Initial alert state per partner — all disabled by default */
+function makeDefaultAlerts(partnerId) {
+  return ALERT_TYPES.reduce((acc, t) => {
+    acc[t.key] = {
+      enabled: false,
+      threshold: t.defaultThreshold,
+      time: t.defaultTime,
+      email: "",
+    };
+    return acc;
+  }, { partnerId });
+}
+
+/* ── UTC offset helper ───────────────────────────────────────────────────── */
+const UTC_OFFSETS = [
+  { label: "UTC−12:00", value: -12 }, { label: "UTC−11:00", value: -11 },
+  { label: "UTC−10:00", value: -10 }, { label: "UTC−09:00", value: -9  },
+  { label: "UTC−08:00", value: -8  }, { label: "UTC−07:00", value: -7  },
+  { label: "UTC−06:00", value: -6  }, { label: "UTC−05:00", value: -5  },
+  { label: "UTC−04:00", value: -4  }, { label: "UTC−03:00", value: -3  },
+  { label: "UTC−02:00", value: -2  }, { label: "UTC−01:00", value: -1  },
+  { label: "UTC+00:00", value: 0   }, { label: "UTC+01:00", value: 1   },
+  { label: "UTC+02:00", value: 2   }, { label: "UTC+03:00 (Baghdad/Riyadh)", value: 3 },
+  { label: "UTC+03:30", value: 3.5 }, { label: "UTC+04:00", value: 4   },
+  { label: "UTC+04:30", value: 4.5 }, { label: "UTC+05:00", value: 5   },
+  { label: "UTC+05:30", value: 5.5 }, { label: "UTC+05:45", value: 5.75},
+  { label: "UTC+06:00", value: 6   }, { label: "UTC+06:30", value: 6.5 },
+  { label: "UTC+07:00", value: 7   }, { label: "UTC+08:00", value: 8   },
+  { label: "UTC+09:00", value: 9   }, { label: "UTC+09:30", value: 9.5 },
+  { label: "UTC+10:00", value: 10  }, { label: "UTC+11:00", value: 11  },
+  { label: "UTC+12:00", value: 12  },
+];
+
+function toUtcLabel(localTime, offsetHours = 0) {
+  if (!localTime) return "—";
+  const [h, m] = localTime.split(":").map(Number);
+  const totalMin = h * 60 + m - offsetHours * 60;
+  const utcMin = ((totalMin % 1440) + 1440) % 1440;
+  const uh = String(Math.floor(utcMin / 60)).padStart(2, "0");
+  const um = String(utcMin % 60).padStart(2, "0");
+  return `${uh}:${um} UTC`;
+}
+
+/* ── Alerts Modal ────────────────────────────────────────────────────────── */
+function AlertsModal({ partner, alerts, onClose, onSave }) {
+  const [form, setForm] = useState({ ...alerts });
+  const [saved, setSaved] = useState(false);
+  const [utcOffset, setUtcOffset] = useState(alerts.utcOffset ?? 3); // default UTC+3 (Baghdad)
+
+  function setField(key, field, value) {
+    setForm((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], [field]: value },
+    }));
+  }
+
+  function handleSave() {
+    onSave({ ...form, utcOffset });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  const av = avColors(partner.name);
+  const enabledCount = ALERT_TYPES.filter((t) => form[t.key]?.enabled).length;
+
+  return (
+    <div className="partner-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="partner-box partner-box--alerts">
+        <div className="partner-modal-header">
+          <div className="f-gap-14">
+            <div className="partner-avatar" style={{ "--bg": av.bg, "--c": av.c }}>
+              {partner.name[0]}
+            </div>
+            <div>
+              <div className="txt-white-hd">Alert Settings</div>
+              <div className="txt-white-sub">
+                {partner.name} · {enabledCount} of {ALERT_TYPES.length} alerts active
+              </div>
+            </div>
+          </div>
+          <button className="partner-modal-close" onClick={onClose}>×</button>
+        </div>
+
+        <div className="p-section">
+          {/* Partner timezone selector */}
+          <div className="alert-tz-row">
+            <div className="alert-tz-row-left">
+              <div className="alert-tz-row-title">Partner Timezone</div>
+              <div className="alert-tz-row-desc">
+                All send times below are entered in this timezone and converted to UTC for delivery.
+              </div>
+            </div>
+            <select
+              className="form-input alert-tz-select"
+              value={utcOffset}
+              onChange={(e) => setUtcOffset(Number(e.target.value))}
+            >
+              {UTC_OFFSETS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="alerts-list">
+            {ALERT_TYPES.map((type) => {
+              const cfg = form[type.key] || {};
+              return (
+                <div key={type.key} className={`alert-card${cfg.enabled ? " alert-card--on" : ""}`}>
+                  <div className="alert-card-header">
+                    <div className="alert-card-left">
+                      <div className="alert-card-title">{type.label}</div>
+                      <div className="alert-card-desc">{type.desc}</div>
+                    </div>
+                    <button
+                      type="button"
+                      className={`ph-toggle${cfg.enabled ? " on" : ""}`}
+                      onClick={() => setField(type.key, "enabled", !cfg.enabled)}
+                    >
+                      <span className="ph-toggle-knob" />
+                    </button>
+                  </div>
+
+                  {cfg.enabled && (
+                    <div className="alert-card-body">
+                      <div className="g-halves">
+                        <div>
+                          <label className="form-label">
+                            Threshold ({type.unit})
+                          </label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={cfg.threshold}
+                            min={1}
+                            onChange={(e) => setField(type.key, "threshold", +e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="form-label">
+                            Send time
+                            <span className="alert-tz-note"> (partner local time)</span>
+                          </label>
+                          <input
+                            type="time"
+                            className="form-input"
+                            value={cfg.time}
+                            onChange={(e) => setField(type.key, "time", e.target.value)}
+                          />
+                          <div className="alert-tz-hint">
+                            UTC equivalent: {cfg.time ? toUtcLabel(cfg.time, utcOffset) : "—"}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="form-field-mt12">
+                        <label className="form-label">
+                          Recipient email
+                          <span className="txt-optional"> (leave blank to use partner email)</span>
+                        </label>
+                        <input
+                          type="email"
+                          className="form-input"
+                          placeholder={partner.email}
+                          value={cfg.email}
+                          onChange={(e) => setField(type.key, "email", e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="ph-modal-actions">
+            <button className="partner-btn-ghost" onClick={onClose}>Cancel</button>
+            <button className="partner-btn-primary" onClick={handleSave}>
+              {saved ? "Saved" : "Save Alerts"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Partner Modal ───────────────────────────────────────────────────────── */
-function PartnerModal({ partner, onClose, onSave, onDelete }) {
+function PartnerModal({ partner, onClose, onSave, onMarkInactive, alerts, onSaveAlerts }) {
   const [mode, setMode] = useState("view");
   const [form, setForm] = useState({ ...partner });
   const [saving, setSaving] = useState(false);
+  const [showAlerts, setShowAlerts] = useState(false);
 
   function set(f, v) { setForm((x) => ({ ...x, [f]: v })); }
   function handleSave() {
     setSaving(true);
     setTimeout(() => { onSave(form); setSaving(false); setMode("view"); }, 500);
   }
-  function handleDelete() { onDelete(partner.id); onClose(); }
+  function handleMarkInactive() {
+    // Mark partner inactive and auto-disable all their alerts
+    onMarkInactive(partner.id);
+    onClose();
+  }
   if (!partner) return null;
 
   const av = avColors(partner.name);
+  const isAlreadyInactive = partner.status === "inactive";
 
   return (
     <div className="partner-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -108,7 +326,7 @@ function PartnerModal({ partner, onClose, onSave, onDelete }) {
             </div>
             <div>
               <div className="txt-white-hd">
-                {mode === "edit" ? "Edit Partner" : mode === "confirm-delete" ? "Delete Partner" : partner.name}
+                {mode === "edit" ? "Edit Partner" : mode === "confirm-inactive" ? "Mark Inactive" : partner.name}
               </div>
               <div className="txt-white-sub">{FLAG[partner.country] ?? "🌐"} {partner.country} · {partner.id}</div>
             </div>
@@ -142,7 +360,10 @@ function PartnerModal({ partner, onClose, onSave, onDelete }) {
               ))}
               <div className="ph-modal-actions">
                 <button className="partner-btn-primary" onClick={() => setMode("edit")}>Edit Partner</button>
-                <button className="partner-btn-danger"  onClick={() => setMode("confirm-delete")}>Delete</button>
+                <button className="partner-btn-alerts"  onClick={() => setShowAlerts(true)}>Manage Alerts</button>
+                {!isAlreadyInactive && (
+                  <button className="partner-btn-inactive" onClick={() => setMode("confirm-inactive")}>Mark Inactive</button>
+                )}
               </div>
             </>
           )}
@@ -181,23 +402,32 @@ function PartnerModal({ partner, onClose, onSave, onDelete }) {
             </>
           )}
 
-          {mode === "confirm-delete" && (
+          {mode === "confirm-inactive" && (
             <div className="ph-delete-confirm">
-              <div className="ph-delete-icon">🗑</div>
-              <p className="ph-delete-msg">Delete <strong>{partner.name}</strong>? This cannot be undone.</p>
+              <div className="ph-inactive-icon" />
+              <p className="ph-delete-msg">
+                Mark <strong>{partner.name}</strong> as inactive?
+                All active alerts for this partner will be automatically disabled.
+              </p>
               <div className="ph-modal-actions">
-                <button className="partner-btn-ghost"  onClick={() => setMode("view")}>Cancel</button>
-                <button className="partner-btn-danger" onClick={handleDelete}>Yes, Delete</button>
+                <button className="partner-btn-ghost"    onClick={() => setMode("view")}>Cancel</button>
+                <button className="partner-btn-inactive" onClick={handleMarkInactive}>Yes, Mark Inactive</button>
               </div>
             </div>
           )}
         </div>
       </div>
+      {showAlerts && (
+        <AlertsModal
+          partner={partner}
+          alerts={alerts || makeDefaultAlerts(partner.id)}
+          onClose={() => setShowAlerts(false)}
+          onSave={(updated) => { onSaveAlerts(updated); setShowAlerts(false); }}
+        />
+      )}
     </div>
   );
 }
-
-/* ── Add Partner Modal ───────────────────────────────────────────────────── */
 function AddPartnerModal({ onClose, onAdd }) {
   const [form, setForm] = useState({
     name:"", contact:"", email:"", country:"",
@@ -507,11 +737,11 @@ const CHART_TICK = {fontSize:10,fill:"#94a3b8"};
 const CHART_DOT  = {r:3,fill:BLUE,strokeWidth:0};
 const CHART_TT   = {fontSize:11,borderRadius:8,border:"none",background:"#0f172a",color:"#fff"};
 
-function ManageTab({ partners, setPartners, onAddClick }) {
-  const [search,   setSearch]   = useState("");
-  const [filter,   setFilter]   = useState("All");
-  const [selected, setSelected] = useState(null);
-  const [perPage,  setPerPage]  = useState(10);
+function ManageTab({ partners, setPartners, onAddClick, partnerAlerts, setPartnerAlerts }) {
+  const [search,       setSearch]       = useState("");
+  const [filter,       setFilter]       = useState("All");
+  const [selected,     setSelected]     = useState(null);
+  const [perPage,      setPerPage]      = useState(10);
 
   const filtered = partners.filter((p)=>{
     const q=search.toLowerCase();
@@ -650,7 +880,16 @@ function ManageTab({ partners, setPartners, onAddClick }) {
                     </td>
                     <td className="td-p-slate">{p.lastActive}</td>
                     <td className="p-sm">
-                      <button className="partner-view-btn" onClick={(e)=>{e.stopPropagation();setSelected(p);}}>View</button>
+                      <div className="f-gap-6">
+                        {(() => {
+                          const cfg = partnerAlerts[p.id];
+                          const count = cfg ? ALERT_TYPES.filter((t) => cfg[t.key]?.enabled).length : 0;
+                          return count > 0 ? (
+                            <span className="partner-alert-badge">{count} alert{count > 1 ? "s" : ""}</span>
+                          ) : null;
+                        })()}
+                        <button className="partner-view-btn" onClick={(e)=>{e.stopPropagation();setSelected(p);}}>View</button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -665,19 +904,37 @@ function ManageTab({ partners, setPartners, onAddClick }) {
       </Card>
 
       {selected&&(
-        <PartnerModal partner={selected} onClose={()=>setSelected(null)}
+        <PartnerModal
+          partner={selected}
+          onClose={()=>setSelected(null)}
+          alerts={partnerAlerts[selected.id] || makeDefaultAlerts(selected.id)}
+          onSaveAlerts={(updated) => setPartnerAlerts((prev) => ({ ...prev, [selected.id]: updated }))}
           onSave={(u)=>{setPartners((prev)=>prev.map((p)=>p.id===u.id?u:p));setSelected(u);}}
-          onDelete={(id)=>{setPartners((prev)=>prev.filter((p)=>p.id!==id));setSelected(null);}}/>
+          onMarkInactive={(id) => {
+            setPartners((prev) => prev.map((p) => p.id === id ? { ...p, status: "inactive" } : p));
+            setPartnerAlerts((prev) => {
+              const existing = prev[id] || makeDefaultAlerts(id);
+              const disabled = { ...existing };
+              ALERT_TYPES.forEach((t) => {
+                disabled[t.key] = { ...disabled[t.key], enabled: false };
+              });
+              return { ...prev, [id]: disabled };
+            });
+            setSelected(null);
+          }}
+        />
       )}
+
     </div>
   );
 }
 
 /* ── Main Page ───────────────────────────────────────────────────────────── */
 export default function PagePartners() {
-  const [activeTab, setActiveTab] = useState("manage");
-  const [showAdd,   setShowAdd]   = useState(false);
-  const [partners,  setPartners]  = useState(PARTNER_ROWS);
+  const [activeTab,     setActiveTab]     = useState("manage");
+  const [showAdd,       setShowAdd]       = useState(false);
+  const [partners,      setPartners]      = useState(PARTNER_ROWS);
+  const [partnerAlerts, setPartnerAlerts] = useState({});
 
   const nodes       = deriveNodes(partners);
   const aggregators = nodes.filter((n)=>n.role==="aggregator").length;
@@ -708,13 +965,13 @@ export default function PagePartners() {
       {/* Tab strip */}
       <div className="ph-tab-strip">
         {[
-          {key:"manage",    label:"Manage Partners", color:BLUE  },
-          {key:"hierarchy", label:"Hierarchy View",  color:"var(--color-violet)"},
-        ].map((t)=>(
+          { key: "manage",    label: "Manage Partners", color: BLUE },
+          { key: "hierarchy", label: "Hierarchy View",  color: "var(--color-violet)" },
+        ].map((t) => (
           <button key={t.key}
-            className={`ph-tab${activeTab===t.key?" ph-tab-active":""}`}
-            onClick={()=>setActiveTab(t.key)}>
-            <span className="ph-tab-pip" style={{ "--c": t.color }}/>
+            className={`ph-tab${activeTab === t.key ? " ph-tab-active" : ""}`}
+            onClick={() => setActiveTab(t.key)}>
+            <span className="ph-tab-pip" style={{ "--c": t.color }} />
             {t.label}
           </button>
         ))}
@@ -722,25 +979,31 @@ export default function PagePartners() {
 
       {/* Content */}
       <div className="ph-tab-body">
-        {activeTab==="manage" && (
-          <ManageTab partners={partners} setPartners={setPartners} onAddClick={()=>setShowAdd(true)}/>
+        {activeTab === "manage" && (
+          <ManageTab
+            partners={partners}
+            setPartners={setPartners}
+            onAddClick={() => setShowAdd(true)}
+            partnerAlerts={partnerAlerts}
+            setPartnerAlerts={setPartnerAlerts}
+          />
         )}
-        {activeTab==="hierarchy" && (
-          <HierarchyTab nodes={nodes} onReparent={(nodeId,newParentId,newRole)=>{
-            setPartners((prev)=>prev.map((p)=>
-              `node-${p.id}`===nodeId
-                ?{...p,type:newRole==="aggregator"?"Aggregator":"CSP",
-                  isDirectClient:newRole==="direct",
-                  aggregatorId:newParentId?newParentId.replace("node-",""):null}
-                :p
+        {activeTab === "hierarchy" && (
+          <HierarchyTab nodes={nodes} onReparent={(nodeId, newParentId, newRole) => {
+            setPartners((prev) => prev.map((p) =>
+              `node-${p.id}` === nodeId
+                ? { ...p, type: newRole === "aggregator" ? "Aggregator" : "CSP",
+                    isDirectClient: newRole === "direct",
+                    aggregatorId: newParentId ? newParentId.replace("node-", "") : null }
+                : p
             ));
-          }}/>
+          }} />
         )}
       </div>
 
-      {showAdd&&(
-        <AddPartnerModal onClose={()=>setShowAdd(false)}
-          onAdd={(p)=>{setPartners((prev)=>[p,...prev]);setShowAdd(false);}}/>
+      {showAdd && (
+        <AddPartnerModal onClose={() => setShowAdd(false)}
+          onAdd={(p) => { setPartners((prev) => [p, ...prev]); setShowAdd(false); }} />
       )}
     </div>
   );

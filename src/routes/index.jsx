@@ -27,6 +27,7 @@ const ALIASES = {
 
 export default function PageRouter({
   page,
+  pageContext,
   role = "admin",
   userType = "Admin",
   setUserType,
@@ -55,7 +56,14 @@ export default function PageRouter({
     return <PageOnboardingUsers setPage={setPage} role={role} />;
 
   const ROUTES = {
-    overview: <PageOverview role={role} setPage={setPage} />,
+    overview: (
+      <PageOverview
+        role={role}
+        setPage={setPage}
+        initialFilter={pageContext?.filterName ?? null}
+        filterType={pageContext?.filterType ?? null}
+      />
+    ),
     "stats-per-service": <PageStatsPerService role={role} />,
     reporting: <PageReporting role={role} />,
     block: <PageBlock />,

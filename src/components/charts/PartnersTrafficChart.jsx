@@ -133,11 +133,25 @@ function BarValueLabel({ x, y, width, value }) {
 
 const PAGE_SIZE = 10;
 
-export default function PartnersTrafficChart({ days = 1, onPartnerFilter }) {
-  const [selected, setSelected] = useState(null);
-  const [page, setPage] = useState(0);
-
+export default function PartnersTrafficChart({ days = 1, onPartnerFilter, initialName = null }) {
   const allData = useMemo(() => buildPartnerData(days, ALL_PARTNERS), [days]);
+
+  // Resolve initialName → id once on mount so the bar is pre-selected
+  const initialId = useMemo(() => {
+    if (!initialName) return null;
+    const match = ALL_PARTNERS.find(
+      (p) => p.name.toLowerCase() === initialName.toLowerCase()
+    );
+    return match ? match.id : null;
+  }, [initialName]);
+
+  const [selected, setSelected] = useState(initialId);
+  const [page, setPage] = useState(() => {
+    // Jump to the page that contains the pre-selected partner
+    if (!initialId) return 0;
+    const idx = allData.findIndex((d) => d.id === initialId);
+    return idx === -1 ? 0 : Math.floor(idx / PAGE_SIZE);
+  });
   const totalPages = Math.ceil(allData.length / PAGE_SIZE);
 
   const pageData = useMemo(

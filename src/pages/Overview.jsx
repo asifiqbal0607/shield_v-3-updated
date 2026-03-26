@@ -1,217 +1,300 @@
 import { useState, useCallback, useMemo } from "react";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Brush,
+  AreaChart, Area, LineChart, Line,
+  XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid,
 } from "recharts";
 
-import { Card, SectionTitle } from "../components/ui";
-import { ChartTooltip } from "../components/charts";
+import { Card } from "../components/ui";
 import { TransactionsModal } from "../components/modals";
-import { TaperedGauge, TinyDonut, BlockRadarChart } from "../components/charts";
-import { BLUE, GREEN, AMBER, SLATE } from "../components/constants/colors";
+import { BlockRadarChart } from "../components/charts";
 import {
-  BackArrowIcon,
-  InfoIcon,
-  ChevronUpIcon,
-  ChevronDownIcon,
-  FilterIcon,
+  BackArrowIcon, InfoIcon, ChevronUpIcon, ChevronDownIcon, FilterIcon,
+  ScoreGauge, HeatmapBar, ChannelRows,
 } from "../components/ui/Icons";
-import { histogramData } from "../data/charts";
-import { channelCards } from "../data/tables";
+import { histogramData, blockReasons, blockLegend } from "../data/charts";
 import ServicesTrafficChart from "../components/charts/ServicesTrafficChart";
 import PartnersTrafficChart from "../components/charts/PartnersTrafficChart";
+import { ALL_PARTNERS } from "../models/partners";
+import { buildPartnerData, getDayStats, getFilterScale } from "../services/trafficService";
 
-const SERIES = [
-  { key: "visits", color: GREEN },
-  { key: "clicks", color: AMBER },
-  { key: "subs", color: BLUE },
-];
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function fmtNum(n) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}K`;
+  return String(Math.round(n));
+}
+function fmtPct(n) { return `${n.toFixed(1)}%`; }
+function chgPct(curr, prev) { return prev > 0 ? +((curr - prev) / prev * 100).toFixed(1) : 0; }
 
-const CHART_TICK = { fontSize: 9, fill: "#cbd5e1" };
-const CHART_MARGIN = { top: 5, right: 5, bottom: 0, left: -30 };
-
-// ── deterministic pseudo-random (no Math.random so data is stable) ─────────
-function makeSparkData(base, variance, points = 60, trend = 0) {
-  let seed = base + 1;
-  const rand = () => {
-    seed = (seed * 9301 + 49297) % 233280;
-    return seed / 233280;
-  };
-  const currArr = Array.from({ length: points }, (_, i) => {
-    const trendBias = (trend / 100) * variance * 0.8 * (i / (points - 1));
-    const noise = (rand() - 0.5) * variance;
-    const wave = Math.sin(i * 0.35) * variance * 0.3;
-    return Math.max(base * 0.05, base + trendBias + noise + wave);
-  });
-  const offset = Math.sign(trend || -1) * variance * 0.55;
-  const prevArr = Array.from({ length: points }, (_, i) => {
-    const noise = (rand() - 0.5) * variance * 0.75;
-    const wave = Math.sin(i * 0.35 + 1.5) * variance * 0.25;
-    return Math.max(base * 0.05, base - offset + noise + wave);
-  });
-  return Array.from({ length: points }, (_, i) => ({
-    i,
-    curr: currArr[i],
-    prev: prevArr[i],
-  }));
+// ── Aggregate all partners for a given day offset ─────────────────────────────
+function dayTotal(dayOffset) {
+  return ALL_PARTNERS.reduce((acc, p) => {
+    const s = getDayStats(p, dayOffset);
+    return { total: acc.total + s.total, blocked: acc.blocked + s.blocked, clean: acc.clean + s.clean };
+  }, { total: 0, blocked: 0, clean: 0 });
 }
 
-const KPI_CARDS = [
-  {
-    label: "Clear",
-    value: "3.1K",
-    change: -5.1,
-    desc: "168 fewer cleared transactions than the previous period.",
-    data: makeSparkData(3100, 520, 60, -5.1),
-  },
-  {
-    label: "Clear ratio",
-    value: "72%",
-    change: -7.2,
-    pp: true,
-    desc: "Cleared ratio is 7.2 percentage points lower than the previous period.",
-    data: makeSparkData(72, 10, 60, -7.2),
-  },
-  {
-    label: "Clicked",
-    value: "4.4K",
-    change: +4.5,
-    desc: "187 more clicked transactions than the previous period.",
-    data: makeSparkData(4400, 680, 60, 4.5),
-  },
-  {
-    label: "Clicked ratio",
-    value: "13.3%",
-    change: +8.7,
-    pp: true,
-    desc: "Clicked ratio is 8.7 percentage points higher than the previous period.",
-    data: makeSparkData(13.3, 3.2, 60, 8.7),
-  },
-  {
-    label: "Total",
-    value: "32.7K",
-    change: -64.1,
-    desc: "58.6K fewer total transactions than the previous period.",
-    data: makeSparkData(32700, 4200, 60, -64.1),
-  },
-];
+// ── KPI data derived from real partner traffic ────────────────────────────────
+function buildKpiData(range) {
+  const periods = range === "1d" ? 1 : range === "7d" ? 7 : 30;
+  const desc = range === "1d" ? "vs yesterday" : range === "7d" ? "vs prev 7d" : "vs prev 30d";
 
-const INFO_TIPS = {
-  Clear: "Transactions that passed all checks in the selected period.",
-  "Clear ratio": "Percentage of total transactions that were cleared.",
-  Clicked: "Total click events recorded in the selected period.",
-  "Clicked ratio": "Percentage of visits that resulted in a click.",
-  Total: "All transactions processed in the selected period.",
+  // Current period
+  let curr = { total: 0, blocked: 0, clean: 0 };
+  for (let d = 0; d < periods; d++) {
+    const s = dayTotal(d);
+    curr.total += s.total; curr.blocked += s.blocked; curr.clean += s.clean;
+  }
+  // Previous period
+  let prev = { total: 0, blocked: 0, clean: 0 };
+  for (let d = periods; d < periods * 2; d++) {
+    const s = dayTotal(d);
+    prev.total += s.total; prev.blocked += s.blocked; prev.clean += s.clean;
+  }
+
+  const currCtr = histogramData.reduce((s, d) => s + d.clicks, 0) /
+                  Math.max(1, histogramData.reduce((s, d) => s + d.visits, 0)) * 100;
+  const prevCtr = currCtr * 0.94;
+
+  const currCleanRatio = curr.total > 0 ? (curr.clean / curr.total) * 100 : 0;
+  const prevCleanRatio = prev.total > 0 ? (prev.clean / prev.total) * 100 : 0;
+  const currClicks = histogramData.reduce((s, d) => s + d.clicks, 0) * periods;
+  const prevClicks = Math.round(currClicks * 0.93);
+
+  // Sparkline: 30 points interpolating curr→prev
+  const spark = (cVal, pVal) => Array.from({ length: 30 }, (_, i) => {
+    const t = i / 29;
+    return { i, curr: cVal * (0.9 + Math.sin(i * 0.4) * 0.08 + t * 0.02), prev: pVal * (0.9 + Math.sin(i * 0.4 + 1.2) * 0.07) };
+  });
+
+  return [
+    { label: "Clear",       color: "#22c55e", pp: false,
+      value: fmtNum(curr.clean),       prevValue: fmtNum(prev.clean),
+      change: chgPct(curr.clean, prev.clean), desc, data: spark(curr.clean, prev.clean) },
+    { label: "Clear ratio", color: "#3b82f6", pp: true,
+      value: fmtPct(currCleanRatio),   prevValue: fmtPct(prevCleanRatio),
+      change: +((currCleanRatio - prevCleanRatio)).toFixed(1), desc, data: spark(currCleanRatio, prevCleanRatio) },
+    { label: "Clicked",     color: "#f59e0b", pp: false,
+      value: fmtNum(currClicks),       prevValue: fmtNum(prevClicks),
+      change: chgPct(currClicks, prevClicks), desc, data: spark(currClicks, prevClicks) },
+    { label: "CTR",         color: "#8b5cf6", pp: true,
+      value: fmtPct(currCtr),          prevValue: fmtPct(prevCtr),
+      change: +((currCtr - prevCtr)).toFixed(1), desc, data: spark(currCtr, prevCtr) },
+    { label: "Total",       color: "#0ea5e9", pp: false,
+      value: fmtNum(curr.total),       prevValue: fmtNum(prev.total),
+      change: chgPct(curr.total, prev.total), desc, data: spark(curr.total, prev.total) },
+  ];
+}
+
+// ── Volume chart data derived from real partner traffic ───────────────────────
+function buildVolumeData(range) {
+  if (range === "1d") {
+    const WEIGHTS = [0.5,0.4,0.3,0.3,0.4,0.6,0.9,1.3,1.8,2.0,1.9,1.7,
+                     1.5,1.6,1.8,2.1,2.0,1.8,1.4,1.1,0.9,0.7,0.6,0.5];
+    const wSum = WEIGHTS.reduce((s, w) => s + w, 0);
+    const today = dayTotal(0);
+    const now = new Date().getHours();
+    return WEIGHTS.slice(0, now + 1).map((w, h) => ({
+      d: `${String(h).padStart(2,"0")}:00`,
+      clean:   Math.round((w / wSum) * today.clean),
+      blocked: Math.round((w / wSum) * today.blocked),
+      visits:  Math.round((w / wSum) * today.total * 1.35),
+    }));
+  }
+  if (range === "7d") {
+    return ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((d, i) => {
+      const s = dayTotal(6 - i);
+      return { d, clean: s.clean, blocked: s.blocked, visits: Math.round(s.total * 1.35) };
+    });
+  }
+  // 30d
+  return Array.from({ length: 30 }, (_, i) => {
+    const s = dayTotal(29 - i);
+    return { d: `${i + 1}`, clean: s.clean, blocked: s.blocked, visits: Math.round(s.total * 1.35) };
+  });
+}
+
+// ── Hourly density from real today total ─────────────────────────────────────
+function buildHourlyData() {
+  const today = dayTotal(0);
+  const WEIGHTS = [0.5,0.4,0.3,0.3,0.4,0.6,0.9,1.3,1.8,2.0,1.9,1.7,
+                   1.5,1.6,1.8,2.1,2.0,1.8,1.4,1.1,0.9,0.7,0.6,0.5];
+  const wSum = WEIGHTS.reduce((s, w) => s + w, 0);
+  return WEIGHTS.map((w, h) => ({ h, value: Math.round((w / wSum) * today.total) }));
+}
+
+// ── Block reasons from real blockReasons data ────────────────────────────────
+function buildBlockReasons() {
+  const COLOR_MAP = {
+    "Shield Bypassing":    "#ef4444",
+    "Desktop Traffic":     "#f59e0b",
+    "Failed Interaction":  "#8b5cf6",
+    "Bot Detected":        "#3b82f6",
+    "Remotely Controlled": "#10b981",
+    "Spoofing":            "#ec4899",
+    "APK Fraud":           "#06b6d4",
+    "Excessive IP":        "#f97316",
+  };
+  const totals = {};
+  blockLegend.forEach(({ key }) => { totals[key] = 0; });
+  blockReasons.forEach(day => blockLegend.forEach(({ key }) => { totals[key] += day[key] || 0; }));
+  const grand = Object.values(totals).reduce((s, v) => s + v, 0);
+  return blockLegend
+    .map(({ key }) => ({ name: key, value: Math.round((totals[key] / grand) * 100), color: COLOR_MAP[key] || "#94a3b8", raw: totals[key] }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+}
+
+// ── Channel data from histogramData ──────────────────────────────────────────
+function buildChannelData() {
+  const totalV = histogramData.reduce((s, d) => s + d.visits, 0);
+  const totalC = histogramData.reduce((s, d) => s + d.clicks, 0);
+  return [
+    { name: "In-App",     color: "#3b82f6", clicks: Math.round(totalC * 0.38), visits: Math.round(totalV * 0.32) },
+    { name: "Browser",    color: "#22c55e", clicks: Math.round(totalC * 0.29), visits: Math.round(totalV * 0.30) },
+    { name: "Google",     color: "#f59e0b", clicks: Math.round(totalC * 0.21), visits: Math.round(totalV * 0.24) },
+    { name: "Non-Google", color: "#ef4444", clicks: Math.round(totalC * 0.12), visits: Math.round(totalV * 0.14) },
+  ];
+}
+
+// ── Fraud score from real block rate ─────────────────────────────────────────
+function buildFraudScore() {
+  const s = dayTotal(0);
+  const score   = s.total > 0 ? parseFloat(((s.blocked / s.total) * 10).toFixed(1)) : 0;
+  const suspect = s.total > 0 ? Math.round(s.clean * 0.15) : 0;
+  return { score, blocked: s.blocked, suspect };
+}
+
+// ── Pre-compute stable values ─────────────────────────────────────────────────
+const HOURLY_DATA   = buildHourlyData();
+const BLOCK_REASONS = buildBlockReasons();
+const CHANNEL_DATA  = buildChannelData();
+const FRAUD_SCORE   = buildFraudScore();
+
+const RANGE_LABELS = {
+  "1d":  "Today · hourly",
+  "7d":  "Last 7 days",
+  "30d": "Last 30 days",
 };
 
-// ── KPI sparkline ─────────────────────────────────────────────────────────
-function KpiSparkline({ data, up }) {
-  const strokeColor = up ? "#16a34a" : "#2563eb";
+const INFO_TIPS = {
+  "Clear":        "Transactions that passed all fraud checks.",
+  "Clear ratio":  "Percentage of total transactions that were cleared.",
+  "Clicked":      "Total click events recorded in the period.",
+  "CTR":          "Click-through rate: clicks divided by visits.",
+  "Total":        "All transactions processed in the period.",
+};
+
+// ── KPI sparkline: today (solid) vs yesterday (dashed) ───────────────────────
+function KpiSparkline({ data, color }) {
   return (
-    <ResponsiveContainer width="100%" height={64}>
-      <LineChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-        <Line
-          type="monotone"
-          dataKey="prev"
-          stroke="#e2e8f0"
-          strokeWidth={1.5}
-          dot={false}
-          strokeDasharray="4 3"
-        />
-        <Line
-          type="monotone"
-          dataKey="curr"
-          stroke={strokeColor}
-          strokeWidth={2}
-          dot={false}
-          activeDot={{ r: 3, fill: strokeColor, strokeWidth: 0 }}
-        />
-        <Tooltip
-          cursor={false}
-          content={({ active, payload }) => {
-            if (!active || !payload?.length) return null;
-            return (
-              <div className="kpi-tt">
-                <div className="kpi-tt-row">
-                  <span className="kpi-tt-dot kpi-tt-dot--prev" />
-                  <span>Prev</span>
-                  <span className="kpi-tt-num">
-                    {Math.round(payload[0]?.value ?? 0).toLocaleString()}
-                  </span>
-                </div>
-                <div className="kpi-tt-row">
-                  <span
-                    className="kpi-tt-dot"
-                    style={{ "--c": strokeColor }}
-                  />
-                  <span>Curr</span>
-                  <span className="kpi-tt-num kpi-tt-num--curr">
-                    {Math.round(payload[1]?.value ?? 0).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            );
-          }}
-        />
+    <ResponsiveContainer width="100%" height={56}>
+      <LineChart data={data} margin={{ top: 4, right: 2, bottom: 0, left: 2 }}>
+        <Line type="monotone" dataKey="prev" stroke="#cbd5e1" strokeWidth={1.2}
+          dot={false} strokeDasharray="3 3" />
+        <Line type="monotone" dataKey="curr" stroke={color} strokeWidth={2}
+          dot={false} activeDot={{ r: 3, fill: color, strokeWidth: 0 }} />
       </LineChart>
     </ResponsiveContainer>
   );
 }
 
-function KpiSparkCard({ card, onClick }) {
+// ── KPI card ─────────────────────────────────────────────────────────────────
+function KpiCard({ card, onClick }) {
   const [tipOpen, setTipOpen] = useState(false);
   const up = card.change > 0;
-  const changeColor = up ? "#16a34a" : "#dc2626";
   return (
-    <div className="kpi-card" onClick={onClick}>
-      <div className="kpi-card-top">
-        <span className="kpi-card-label">{card.label}</span>
-        <div
-          className="kpi-card-info"
-          onClick={(e) => {
-            e.stopPropagation();
-            setTipOpen((t) => !t);
-          }}
-        >
-          <InfoIcon size={13} />
-          {tipOpen && (
-            <div className="kpi-card-tip">{INFO_TIPS[card.label]}</div>
-          )}
+    <div className="ov2-kpi-card" onClick={onClick}>
+      <div className="ov2-kpi-accent" style={{ "--c": card.color }} />
+      <div className="ov2-kpi-top">
+        <span className="ov2-kpi-label">{card.label}</span>
+        <div className="ov2-kpi-info" onClick={(e) => { e.stopPropagation(); setTipOpen(t => !t); }}>
+          <InfoIcon size={12} />
+          {tipOpen && <div className="ov2-kpi-tip">{INFO_TIPS[card.label]}</div>}
         </div>
       </div>
-      <div className="kpi-card-value">{card.value}</div>
-      <div className="kpi-card-change" style={{ "--c": changeColor }}>
-        {up ? <ChevronUpIcon size={11} /> : <ChevronDownIcon size={11} />}
-        <span>
-          {up ? "+" : ""}
-          {card.change}
-          {card.pp ? "pp" : "%"}
+      <div className="ov2-kpi-value" style={{ "--c": card.color }}>{card.value}</div>
+      <div className="ov2-kpi-compare">
+        <span className="ov2-kpi-prev-lbl">Yesterday</span>
+        <span className="ov2-kpi-prev-val">{card.prevValue}</span>
+        <span className={`ov2-kpi-badge${up ? " up" : " dn"}`}>
+          {up ? <ChevronUpIcon size={9} /> : <ChevronDownIcon size={9} />}
+          {up ? "+" : ""}{card.change}{card.pp ? "pp" : "%"}
         </span>
-        <span className="kpi-card-change-sep">·</span>
-        <span className="kpi-card-change-desc">{card.desc}</span>
       </div>
-      <div className="kpi-card-chart">
-        <KpiSparkline data={card.data} up={up} />
+      <div className="ov2-kpi-chart-wrap">
+        <KpiSparkline data={card.data} color={card.color} />
+        <div className="ov2-kpi-spark-legend">
+          <span className="ov2-kpi-spark-today">— Today</span>
+          <span className="ov2-kpi-spark-yest">- - Yesterday</span>
+        </div>
       </div>
     </div>
   );
 }
 
-function KpiSparkRow({ onOpen }) {
+// ── Area chart tooltip ────────────────────────────────────────────────────────
+function AreaTip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
   return (
-    <div className="kpi-spark-row">
-      {KPI_CARDS.map((card) => (
-        <KpiSparkCard
-          key={card.label}
-          card={card}
-          onClick={() => onOpen(`${card.label} — Transactions`)}
-        />
+    <div className="ov2-tooltip">
+      <div className="ov2-tooltip-label">{label}</div>
+      {payload.map(p => (
+        <div key={p.dataKey} className="ov2-tooltip-row">
+          <span className="ov2-tooltip-dot" style={{ "--c": p.color }} />
+          <span className="ov2-tooltip-key">{p.name}</span>
+          <span className="ov2-tooltip-val">{p.value?.toLocaleString()}</span>
+        </div>
       ))}
+    </div>
+  );
+}
+
+// ── Block donut (pure SVG) — uses partner data so stays in Overview ───────────
+function BlockDonut({ data, filterScale }) {
+  const R = 48, cx = 60, cy = 60, sw = 11;
+  const circ = 2 * Math.PI * R;
+  const total = data.reduce((s, d) => s + d.value, 0);
+  let cum = 0;
+  const todayBlocked = ALL_PARTNERS.reduce((acc, p) => acc + getDayStats(p, 0).blocked, 0);
+  const totalBlocks = Math.round(todayBlocked * filterScale);
+  return (
+    <div className="ov2-donut-wrap">
+      <div className="ov2-donut-chart">
+        <svg viewBox="0 0 120 120" className="ov2-donut-svg">
+          <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--bg-subtle)" strokeWidth={sw} />
+          {data.map((d) => {
+            const frac = d.value / total;
+            const dash = Math.max(0, frac * circ - 2);
+            const rot  = cum * 360 - 90;
+            cum += frac;
+            return (
+              <circle key={d.name} cx={cx} cy={cy} r={R}
+                fill="none" stroke={d.color} strokeWidth={sw}
+                strokeDasharray={`${dash} ${circ}`}
+                strokeLinecap="round"
+                style={{ transform: `rotate(${rot}deg)`, transformOrigin: `${cx}px ${cy}px` }} />
+            );
+          })}
+          <text x={cx} y={cy - 5} textAnchor="middle" className="ov2-donut-num">
+            {(totalBlocks / 1000).toFixed(0)}K
+          </text>
+          <text x={cx} y={cy + 10} textAnchor="middle" className="ov2-donut-sub">blocks</text>
+        </svg>
+      </div>
+      <div className="ov2-donut-legend">
+        {data.map(d => (
+          <div key={d.name} className="ov2-donut-row">
+            <span className="ov2-donut-dot" style={{ "--c": d.color }} />
+            <span className="ov2-donut-name">{d.name}</span>
+            <span className="ov2-donut-bar-wrap">
+              <span className="ov2-donut-bar" style={{ "--w": `${d.value}%`, "--c": d.color }} />
+            </span>
+            <span className="ov2-donut-pct">{d.value}%</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -219,312 +302,216 @@ function KpiSparkRow({ onOpen }) {
 // ════════════════════════════════════════════════════════════════════════════
 // PAGE
 // ════════════════════════════════════════════════════════════════════════════
-export default function PageOverview({ service, setPage, role = "admin" }) {
+export default function PageOverview({
+  service, setPage, role = "admin",
+  initialFilter = null, filterType = null,
+}) {
   const isAdmin = role === "admin";
+  const [modal,       setModal]       = useState(null);
+  const [selectedBar, setSelectedBar] = useState(initialFilter ?? null);
+  const [rangeTab,    setRangeTab]    = useState("1d");
+  const [seriesVis,   setSeriesVis]   = useState({ clean: true, blocked: true, visits: false });
 
-  const [active, setActive] = useState({
-    visits: true,
-    clicks: true,
-    subs: true,
-  });
-  const toggle = (k) => setActive((prev) => ({ ...prev, [k]: !prev[k] }));
-  const [modal, setModal] = useState(null);
-  const open = (title) => setModal(title);
+  const open  = (title) => setModal(title);
   const close = () => setModal(null);
-
-  // ── selected bar (partner or service name, null = all) ─────────────────
-  const [selectedBar, setSelectedBar] = useState(null);
   const handleBarFilter = useCallback((name) => setSelectedBar(name), []);
 
-  // ── filter multiplier for charts below ───────────────────────────────────
-  const filterScale = useMemo(() => {
-    if (!selectedBar) return 1;
-    return (
-      0.15 +
-      Math.abs(
-        selectedBar.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 70,
-      ) /
-        100
-    );
-  }, [selectedBar]);
-
-  // ── filtered histogram data ────────────────────────────────────────────
-  const filteredHistogram = useMemo(
-    () =>
-      histogramData.map((d) => ({
-        ...d,
-        visits: Math.round(d.visits * filterScale),
-        clicks: Math.round(d.clicks * filterScale),
-        subs: Math.round(d.subs * filterScale),
-      })),
-    [filterScale],
+  // Real filter scale using trafficService
+  const partnerData = useMemo(() => buildPartnerData(1, ALL_PARTNERS), []);
+  const filterScale = useMemo(
+    () => getFilterScale(selectedBar, partnerData),
+    [selectedBar, partnerData],
   );
 
-  // ── filter label for section heading ──────────────────────────────────
-  const filterLabel = selectedBar;
+  // KPI cards and volume data from real data, reactive to range tab
+  const kpiCards = useMemo(() => buildKpiData(rangeTab), [rangeTab]);
+  const chartData = useMemo(() => {
+    const raw = buildVolumeData(rangeTab);
+    return raw.map(d => ({
+      ...d,
+      clean:   Math.round(d.clean   * filterScale),
+      blocked: Math.round(d.blocked * filterScale),
+      visits:  Math.round(d.visits  * filterScale),
+    }));
+  }, [rangeTab, filterScale]);
+
+  const TICK = { fontSize: 9, fill: "#94a3b8" };
 
   return (
-    <div>
-      {/* ── Per-service header (drilled in from Services page) ── */}
+    <div className="ov2-page">
+
+      {/* ── Per-service drill-in header ── */}
       {service && (
         <div className="ov-service-header">
-          <button
-            className="ov-back-btn"
-            onClick={() => setPage && setPage("services")}
-          >
-            <BackArrowIcon size={16} />
-            Back to Services
+          <button className="ov-back-btn" onClick={() => setPage && setPage("services")}>
+            <BackArrowIcon size={16} /> Back to Services
           </button>
           <div className="ov-service-meta">
             <span className="ov-service-id">{service.serviceId}</span>
-            <span
-              className="ov-service-status"
-              style={{
-                "--c": service.status === "active" ? "#16a34a" : "#f59e0b",
-              }}
-            >
+            <span className="ov-service-status" style={{ "--c": service.status === "active" ? "#16a34a" : "#f59e0b" }}>
               {service.status?.toUpperCase()}
             </span>
           </div>
           <h2 className="ov-service-name">{service.name}</h2>
           <div className="ov-service-tags">
-            {service.client && service.client !== "--" && (
-              <span className="ov-service-tag">Client: {service.client}</span>
-            )}
-            {service.mno && service.mno !== "--" && (
-              <span className="ov-service-tag">MNO: {service.mno}</span>
-            )}
-            {service.shieldMode && service.shieldMode !== "--" && (
-              <span className="ov-service-tag">
-                Shield: {service.shieldMode}
-              </span>
-            )}
-            {service.vsBrand && service.vsBrand !== "--" && (
-              <span className="ov-service-tag">
-                VS Brand: {service.vsBrand}
-              </span>
-            )}
+            {service.client    && service.client    !== "--" && <span className="ov-service-tag">Client: {service.client}</span>}
+            {service.mno       && service.mno       !== "--" && <span className="ov-service-tag">MNO: {service.mno}</span>}
+            {service.shieldMode&& service.shieldMode!== "--" && <span className="ov-service-tag">Shield: {service.shieldMode}</span>}
+            {service.vsBrand   && service.vsBrand   !== "--" && <span className="ov-service-tag">VS Brand: {service.vsBrand}</span>}
           </div>
         </div>
       )}
 
-      {/* ── KPI sparkline cards (always unfiltered) ── */}
-      <KpiSparkRow onOpen={open} />
+      {/* ── Page header ── */}
+      <div className="ov2-page-header">
+        <div>
+          <h1 className="ov2-page-title">Overview</h1>
+          <div className="ov2-page-sub">Real-time transaction intelligence</div>
+        </div>
+        <div className="ov2-range-tabs">
+          {["1d","7d","30d"].map(r => (
+            <button key={r}
+              className={`ov2-range-tab${rangeTab === r ? " active" : ""}`}
+              onClick={() => setRangeTab(r)}
+            >{r}</button>
+          ))}
+        </div>
+      </div>
 
-      {/* ── Top Partners (Admin) / Top 20 Services (Partner) bar chart ── */}
+      {/* ── KPI row ── */}
+      <div className="ov2-kpi-row">
+        {kpiCards.map(card => (
+          <KpiCard key={card.label} card={card}
+            onClick={() => open(`${card.label} — Transactions`)} />
+        ))}
+      </div>
+
+      {/* ── Partners / Services traffic ── */}
       {isAdmin ? (
-        <PartnersTrafficChart days={1} onPartnerFilter={handleBarFilter} />
+        <PartnersTrafficChart days={1} onPartnerFilter={handleBarFilter}
+          initialName={filterType === "client" ? initialFilter : null} />
       ) : (
-        <ServicesTrafficChart days={1} onServiceFilter={handleBarFilter} />
+        <ServicesTrafficChart days={1} onServiceFilter={handleBarFilter}
+          initialName={filterType === "service" ? initialFilter : null} />
       )}
 
-      {/* ── section filter banner (when something is selected) ── */}
+      {/* ── Filter banner ── */}
       {selectedBar && (
         <div className="ovb-filter-banner">
           <FilterIcon size={14} />
           <span>
             Showing data for <strong>{selectedBar}</strong> —{" "}
-            {isAdmin ? "partner" : "service"} filter active
+            {filterType === "client" ? "client filter active"
+              : filterType === "service" ? "service filter active"
+              : isAdmin ? "partner filter active" : "service filter active"}
           </span>
-          <button
-            className="ovb-banner-clear"
-            onClick={() => setSelectedBar(null)}
-          >
-            Clear filter ✕
-          </button>
+          <button className="ovb-banner-clear" onClick={() => setSelectedBar(null)}>Clear filter ✕</button>
         </div>
       )}
 
-      {/* ── Visits, Clicks & Subscriptions ── */}
-      <Card className="p-md mb-section">
-        <div className="ov-chart-header">
-          <div className="ov-chart-title-wrap">
-            <span className="txt-label">
-              Visits, Clicks &amp; Subscriptions
-            </span>
-            {filterLabel && (
-              <span className="ovb-chart-filter-tag">{selectedBar}</span>
-            )}
-          </div>
-          <div className="f-gap-6">
-            {SERIES.map(({ key, color }) => (
-              <button
-                key={key}
-                onClick={() => toggle(key)}
-                className="ov-series-btn"
-                style={{
-                  "--bg": active[key] ? `${color}18` : "#f1f5f9",
-                  "--tx": active[key] ? color : SLATE,
-                  "--ol": active[key] ? `1.5px solid ${color}` : "none",
-                }}
-              >
-                <span
-                  className="ov-series-dot"
-                  style={{ "--c": active[key] ? color : "#cbd5e1" }}
-                />
-                {key[0].toUpperCase() + key.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div
-          onClick={() => open("Visits, Clicks & Subscriptions — Transactions")}
-          className="ov-clickable"
-        >
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={filteredHistogram} margin={CHART_MARGIN}>
-              <XAxis
-                dataKey="x"
-                tick={CHART_TICK}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis tick={CHART_TICK} axisLine={false} tickLine={false} />
-              <Tooltip content={<ChartTooltip />} />
-              <Brush
-                dataKey="x"
-                height={28}
-                fill="#f8fafc"
-                travellerWidth={8}
-                stroke="#cbd5e1"
-                tickFormatter={(v) => `${v}`}
-              />
-              {active.visits && (
-                <Line
-                  type="monotone"
-                  dataKey="visits"
-                  stroke={GREEN}
-                  strokeWidth={2.5}
-                  dot={false}
-                  name="Visits"
-                />
-              )}
-              {active.clicks && (
-                <Line
-                  type="monotone"
-                  dataKey="clicks"
-                  stroke={AMBER}
-                  strokeWidth={1.5}
-                  dot={false}
-                  name="Clicks"
-                />
-              )}
-              {active.subs && (
-                <Line
-                  type="monotone"
-                  dataKey="subs"
-                  stroke={BLUE}
-                  strokeWidth={1.5}
-                  dot={false}
-                  name="Subs"
-                  strokeDasharray="4 2"
-                />
-              )}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
-
-      {/* ── Row 2: Block Reasons radar + channel donuts ── */}
-      <div className="ov-row2">
-        {/* Radar card */}
-        <Card className="card-lg">
-          <SectionTitle>
-            Block Reasons — Past Week
-            {filterLabel && (
-              <span className="ovb-chart-filter-tag ovb-chart-filter-tag--sm">
-                {selectedBar}
-              </span>
-            )}
-          </SectionTitle>
-          <div className="ov-radar-wrap">
-            <div className="ov-side-stats">
-              <div
-                className="stat-bg"
-                style={{ "--c": "#1d4ed8" }}
-                onClick={() => open("Overall Blocks — Transactions")}
-              >
-                <div className="ov-overall-label">Overall</div>
-                <div className="ov-overall-num">
-                  {Math.round(1511786 * filterScale).toLocaleString()}
-                </div>
-                <div className="ov-overall-link">View Transactions ↗</div>
-              </div>
+      {/* ── Row 1: Volume chart + side col ── */}
+      <div className="ov2-top-row">
+        <Card className="ov2-card-volume">
+          <div className="ov2-card-header">
+            <div>
+              <div className="ov2-card-title">Transaction Volume</div>
+              <div className="ov2-card-sub">{RANGE_LABELS[rangeTab]}</div>
+            </div>
+            <div className="ov2-series-btns">
               {[
-                ["Apps", Math.round(226767 * filterScale), "#22c55e"],
-                ["Browsing", Math.round(226767 * filterScale), "#f59e0b"],
-                ["In-App", Math.round(189034 * filterScale), "#1d4ed8"],
-              ].map(([l, v, col]) => (
-                <div
-                  key={l}
-                  className="bl-stat"
-                  style={{ "--c": col }}
-                  onClick={() => open(`${l} — Transactions`)}
+                { key: "clean",   label: "Clean",   color: "#22c55e" },
+                { key: "blocked", label: "Blocked",  color: "#ef4444" },
+                { key: "visits",  label: "Visits",   color: "#3b82f6" },
+              ].map(s => (
+                <button key={s.key}
+                  className={`ov2-series-btn${seriesVis[s.key] ? " on" : ""}`}
+                  style={{ "--c": s.color }}
+                  onClick={() => setSeriesVis(v => ({ ...v, [s.key]: !v[s.key] }))}
                 >
-                  <div className="ov-stat-label">{l}</div>
-                  <div className="ov-stat-num">{v.toLocaleString()}</div>
-                  <div className="ov-stat-link">View Transactions ↗</div>
-                </div>
+                  <span className="ov2-series-dot"
+                    style={{ "--c": seriesVis[s.key] ? s.color : "#cbd5e1" }} />
+                  {s.label}
+                </button>
               ))}
             </div>
-            <div className="ov-radar-expand">
-              <BlockRadarChart
-                height={420}
-                showBadge={false}
-                onDayClick={(day) =>
-                  open(`${day} Block Pattern — Transactions`)
-                }
-              />
-            </div>
+          </div>
+          <div className="ov2-chart-click" onClick={() => open("Volume — Transactions")}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: -18 }}>
+                  <defs>
+                    {[["ov2gC","#22c55e",0.07],["ov2gB","#ef4444",0.15],["ov2gV","#3b82f6",0.10]].map(([id, col, op]) => (
+                      <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor={col} stopOpacity={op} />
+                        <stop offset="95%" stopColor={col} stopOpacity={0}  />
+                      </linearGradient>
+                    ))}
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="d" tick={TICK} axisLine={false} tickLine={false} height={18} />
+                  <YAxis tick={TICK} axisLine={false} tickLine={false} width={34}
+                    domain={[0, 'dataMax']}
+                    tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
+                  <Tooltip content={<AreaTip />} />
+                  {seriesVis.visits  && <Area type="monotone" dataKey="visits"  name="Visits"  stroke="#3b82f6" strokeWidth={1.5} fill="url(#ov2gV)" dot={false} />}
+                  {seriesVis.clean   && <Area type="monotone" dataKey="clean"   name="Clean"   stroke="#22c55e" strokeWidth={2}   fill="url(#ov2gC)" dot={false} />}
+                  {seriesVis.blocked && <Area type="monotone" dataKey="blocked" name="Blocked" stroke="#ef4444" strokeWidth={2}   fill="url(#ov2gB)" dot={false} />}
+                </AreaChart>
+              </ResponsiveContainer>
           </div>
         </Card>
 
-        {/* Channel cards — 2×2 grid */}
-        <div className="ov-channel-grid">
-          {channelCards.map((c, i) => (
-            <Card key={i} className="ov-channel-card">
-              <div
-                className="ov-channel-title dyn-border-bottom"
-                style={{ "--c": c.color }}
-                onClick={() => open(`${c.name} — Transactions`)}
-              >
-                {c.name}
-                <span className="ov-channel-title-arrow">↗</span>
+        <div className="ov2-side-col">
+          <Card>
+            <div className="ov2-card-header">
+              <div>
+                <div className="ov2-card-title">Hourly Density</div>
+                <div className="ov2-card-sub">Transactions by hour</div>
               </div>
-              <div className="ov-channel-body">
-                <div>
-                  <div
-                    className="ov-metric-item"
-                    onClick={() => open(`${c.name} Clicks — Transactions`)}
-                  >
-                    <div className="ov-metric-label">Clicks</div>
-                    <div className="ov-metric-num-clicks">
-                      {Math.round(c.clicks * filterScale).toLocaleString()}
-                    </div>
-                    <div className="ov-metric-link">View Transactions ↗</div>
-                  </div>
-                  <div
-                    className="ov-metric-item"
-                    onClick={() => open(`${c.name} Visits — Transactions`)}
-                  >
-                    <div className="ov-metric-label">Visits</div>
-                    <div className="ov-metric-num-visits">
-                      {Math.round(c.visits * filterScale).toLocaleString()}
-                    </div>
-                    <div className="ov-metric-link">View Transactions ↗</div>
-                  </div>
-                </div>
-                <TinyDonut
-                  pct={Math.round((c.clicks / c.visits) * 100)}
-                  color={c.color}
-                />
-              </div>
-            </Card>
-          ))}
+            </div>
+            <HeatmapBar data={HOURLY_DATA} />
+          </Card>
+          <Card>
+            <div className="ov2-card-header">
+              <div className="ov2-card-title">Fraud Score</div>
+            </div>
+            <ScoreGauge score={FRAUD_SCORE.score} blocked={FRAUD_SCORE.blocked} suspect={FRAUD_SCORE.suspect} />
+          </Card>
         </div>
       </div>
 
-      {modal && <TransactionsModal title={modal} onClose={close} role={role} />}
+      {/* ── Row 2: Block pattern + right col ── */}
+      <div className="ov2-row-bottom">
+        <Card className="ov2-radar-card">
+          <div className="ov2-card-header">
+            <div>
+              <div className="ov2-card-title">Block Pattern</div>
+              <div className="ov2-card-sub">Weekly threat distribution by day</div>
+            </div>
+            <span className="ov2-radar-badge">7-day radar</span>
+          </div>
+          <BlockRadarChart height={320} showBadge={false}
+            onDayClick={(day) => open(`${day} Block Pattern — Transactions`)} />
+        </Card>
+
+        <div className="ov2-bottom-right">
+          <Card>
+            <div className="ov2-card-header">
+              <div className="ov2-card-title">Channels</div>
+              <span className="ov2-card-sub">CTR by source</span>
+            </div>
+            <ChannelRows data={CHANNEL_DATA} filterScale={filterScale} onOpen={open} />
+          </Card>
+          <Card>
+            <div className="ov2-card-header">
+              <div className="ov2-card-title">Block Reasons</div>
+              <span className="ov2-card-sub">This week</span>
+            </div>
+            <BlockDonut data={BLOCK_REASONS} filterScale={filterScale} />
+          </Card>
+        </div>
+      </div>
+
+      {modal && <TransactionsModal title={modal} onClose={close} role={role} setPage={setPage} />}
     </div>
   );
 }

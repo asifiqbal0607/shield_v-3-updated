@@ -1767,6 +1767,7 @@ const ADMIN_ACTIONS = [
   { group: "Management" },
   { key: "edit", label: "Edit", icon: "✏️", color: "#0d6efd" },
   { key: "ip", label: "IP", icon: "🌐", color: "#6c757d" },
+  { key: "toggleStatus", label: "Toggle Status", icon: "⏻", color: "#f59e0b" },
   // { key: "cloneService", label: "Clone Service", icon: "📋", color: "#0d9488" },
   { divider: true },
   { group: "Data" },
@@ -1784,7 +1785,7 @@ const ADMIN_ACTIONS = [
   },
 ];
 
-function ActionsDropdown({ rowId, openRow, setOpenRow, onAction }) {
+function ActionsDropdown({ rowId, openRow, setOpenRow, onAction, row }) {
   const open = openRow === rowId;
   const btnRef = useRef(null);
   const dropRef = useRef(null);
@@ -1845,7 +1846,7 @@ function ActionsDropdown({ rowId, openRow, setOpenRow, onAction }) {
           right: coords.right,
         }}
       >
-        {ADMIN_ACTIONS.map((a, i) => {
+      {ADMIN_ACTIONS.map((a, i) => {
           if (a.divider) return <div key={i} className="svc-adm-divider" />;
           if (a.group)
             return (
@@ -1853,6 +1854,13 @@ function ActionsDropdown({ rowId, openRow, setOpenRow, onAction }) {
                 {a.group}
               </div>
             );
+          const isToggle = a.key === "toggleStatus";
+          const label = isToggle
+            ? row?.status === "active" ? "Inactive" : "Active"
+            : a.label;
+          const color = isToggle
+            ? row?.status === "active" ? "#ef4444" : "#22c55e"
+            : a.color;
           return (
             <button
               key={a.label}
@@ -1862,11 +1870,11 @@ function ActionsDropdown({ rowId, openRow, setOpenRow, onAction }) {
               }}
               className="svc-adm-item"
             >
-              <span className="svc-adm-icon" style={{ "--c": a.color }}>
+              <span className="svc-adm-icon" style={{ "--c": color }}>
                 {a.icon}
               </span>
-              <span className="svc-adm-label" style={{ "--c": a.color }}>
-                {a.label}
+              <span className="svc-adm-label" style={{ "--c": color }}>
+                {label}
               </span>
             </button>
           );
@@ -3310,6 +3318,50 @@ function ServiceViewModal({ row, onClose }) {
   );
 }
 
+// ─── Toggle Status Confirmation Modal ────────────────────────────────────────
+function ToggleStatusModal({ row, onConfirm, onClose }) {
+  const isActive = row?.status === "active";
+  return createPortal(
+    <div className="svc-modal-overlay" onClick={onClose}>
+      <div className="svc-modal-box" style={{ "--mw": 420 }} onClick={(e) => e.stopPropagation()}>
+        <div className="svc-modal-header">
+          <div>
+            <div className="svc-modal-title">
+              {isActive ? "Service Inactive" : "Service Active"}
+            </div>
+            <div className="svc-modal-subtitle">{row?.name}</div>
+          </div>
+          <button className="svc-modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="svc-modal-body">
+          <div className="svc-toggle-confirm-body">
+            <div className={`svc-toggle-confirm-icon${isActive ? " inactive" : " active"}`} />
+            <p className="svc-toggle-confirm-msg">
+              {isActive
+                ? "This will deactivate the service. It will no longer process transactions until reactivated."
+                : "This will reactivate the service and resume transaction processing."}
+            </p>
+            <div className="svc-toggle-confirm-meta">
+              <span>Service ID:</span>
+              <span className="svc-toggle-id">{row?.serviceId}</span>
+            </div>
+          </div>
+          <div className="svc-modal-footer">
+            <button className="svc-modal-btn-ghost" onClick={onClose}>Cancel</button>
+            <button
+              className={`svc-modal-btn-confirm${isActive ? " inactive" : " active"}`}
+              onClick={onConfirm}
+            >
+              {isActive ? "Yes, Inactive" : "Yes, Active"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function PartnerActions({ row, openModal }) {
   return (
     <div className="f-gap-4">
@@ -3333,6 +3385,13 @@ function PartnerActions({ row, openModal }) {
           )}
         </button>
       ))}
+      <button
+        className={`svc-partner-toggle-btn${row.status === "active" ? " inactive" : " active"}`}
+        title={row.status === "active" ? "Inactive" : "Active"}
+        onClick={() => openModal("toggleStatus", row)}
+      >
+        {row.status === "active" ? "Inactive" : "Active"}
+      </button>
     </div>
   );
 }
@@ -3802,11 +3861,17 @@ export default function PageServices({ role = "admin", setPage }) {
   const [openRow, setOpenRow] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
-  const [exportModal, setExportModal] = useState(null); // null | "all" | "active" | "inactive"
+  const [exportModal, setExportModal] = useState(null);
+  const [services, setServices] = useState(svcRows);
+  const [confirmToggle, setConfirmToggle] = useState(null); // row to confirm toggle
 
   function openModal(key, row) {
     if (key === "dashboard") {
       if (setPage) setPage("overview", row);
+      return;
+    }
+    if (key === "toggleStatus") {
+      setConfirmToggle(row);
       return;
     }
     setActiveModal(key);
@@ -3816,34 +3881,32 @@ export default function PageServices({ role = "admin", setPage }) {
     setActiveModal(null);
     setActiveRow(null);
   }
+  function handleConfirmToggle() {
+    if (!confirmToggle) return;
+    setServices((prev) =>
+      prev.map((s) =>
+        s.id === confirmToggle.id
+          ? { ...s, status: s.status === "active" ? "inactive" : "active" }
+          : s,
+      ),
+    );
+    setConfirmToggle(null);
+    // Switch tab to reflect new status
+    setTab(confirmToggle.status === "active" ? "inactive" : "active");
+  }
 
   const isPartner = role === "partner";
   const isAdmin = role === "admin";
 
-  const activeServices = svcRows.filter((r) => r.status === "active");
-  const inactiveServices = svcRows.filter((r) => r.status !== "active");
+  const activeServices = services.filter((r) => r.status === "active");
+  const inactiveServices = services.filter((r) => r.status !== "active");
   const displayed = tab === "active" ? activeServices : inactiveServices;
   const visibleServices = displayed.slice(0, perPageSvc);
 
   const SUMMARY_STATS = [
-    {
-      label: "Total Services",
-      value: svcRows.length,
-      color: "#2563eb",
-      filter: "all",
-    },
-    {
-      label: "Active",
-      value: activeServices.length,
-      color: "#22c55e",
-      filter: "active",
-    },
-    {
-      label: "Inactive",
-      value: inactiveServices.length,
-      color: "#f50b1f",
-      filter: "inactive",
-    },
+    { label: "Total Services",  value: services.length,         color: "#2563eb", filter: "all"      },
+    { label: "Active",          value: activeServices.length,   color: "#22c55e", filter: "active"   },
+    { label: "Inactive",        value: inactiveServices.length, color: "#f50b1f", filter: "inactive" },
   ];
 
   const ALL_COLUMNS = [
@@ -3946,6 +4009,7 @@ export default function PageServices({ role = "admin", setPage }) {
             openRow={openRow}
             setOpenRow={setOpenRow}
             onAction={(key) => openModal(key, row)}
+            row={row}
           />
         ) : (
           <PartnerActions row={row} openModal={openModal} />
@@ -4008,7 +4072,7 @@ export default function PageServices({ role = "admin", setPage }) {
         createPortal(
           <SvcExportModal
             filter={exportModal}
-            allRows={svcRows}
+            allRows={services}
             activeRows={activeServices}
             inactiveRows={inactiveServices}
             role={role}
@@ -4016,6 +4080,14 @@ export default function PageServices({ role = "admin", setPage }) {
           />,
           document.body,
         )}
+
+      {confirmToggle && (
+        <ToggleStatusModal
+          row={confirmToggle}
+          onClose={() => setConfirmToggle(null)}
+          onConfirm={handleConfirmToggle}
+        />
+      )}
 
       {/* Charts */}
       <div className="g-split2 mb-section">

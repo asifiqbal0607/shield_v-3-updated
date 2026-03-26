@@ -20,18 +20,27 @@ export default function App() {
   } = useAuth();
 
   const [page, setPage] = useState("overview");
+  const [pageContext, setPageContext] = useState(null);
 
   const handleLoginAndRedirect = (role) => {
     handleLogin(role);
     setPage("overview");
+    setPageContext(null);
   };
 
-  const handleNav = (newPage, newRole) => {
-    if (newRole !== undefined) {
-      handleSetRole(newRole);
+  const handleNav = (newPage, context) => {
+    // context is either a string (legacy role switch) or an object (page context)
+    if (context !== null && typeof context === "object") {
+      setPage(newPage);
+      setPageContext(context);
+    } else if (typeof context === "string") {
+      // legacy: setPage(page, role)
+      handleSetRole(context);
       setPage("overview");
+      setPageContext(null);
     } else {
       setPage(newPage);
+      setPageContext(null);
     }
   };
 
@@ -51,13 +60,14 @@ export default function App() {
     <TicketProvider>
       <AppLayout
         role={role}
-        setRole={(r) => { handleSetRole(r); setPage("overview"); }}
+        setRole={(r) => { handleSetRole(r); setPage("overview"); setPageContext(null); }}
         page={page}
         setPage={handleNav}
         onLogout={() => setShowLogout(true)}
       >
         <PageRouter
           page={page}
+          pageContext={pageContext}
           role={role}
           userType={userType}
           setUserType={setUserType}

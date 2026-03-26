@@ -157,7 +157,7 @@ function seqHasFail(seq) {
 }
 
 // ── Raw Data Modal ────────────────────────────────────────────────────────────
-function RawDataModal({ d, rawEvents, onClose }) {
+function RawDataModal({ d, rawEvents, onClose, setPage, onParentClose, isAdmin, navigateTo }) {
   const [section, setSection] = useState("txn"); // "txn" | "events" | "apm"
   const [txnView, setTxnView] = useState("table"); // "table" | "json"
   const [evtPage, setEvtPage] = useState(1);
@@ -369,12 +369,34 @@ function RawDataModal({ d, rawEvents, onClose }) {
                           <td className="rdm-td-name">{r.name}</td>
                           <td className="rdm-td-data">
                             {r.badge === "client" ? (
-                              <span className="rdm-badge rdm-badge-client">
-                                {r.data}
-                              </span>
+                              isAdmin ? (
+                                <span
+                                  className="rdm-badge rdm-badge-client rdm-badge-clickable"
+                                  title={`Filter overview by ${r.data}`}
+                                  onClick={() => {
+                                    onClose();
+                                    onParentClose && onParentClose();
+                                    navigateTo && navigateTo(r.data, "client");
+                                  }}
+                                >
+                                  {r.data}
+                                  <span className="rdm-badge-link-icon">↗</span>
+                                </span>
+                              ) : (
+                                <span className="rdm-badge rdm-badge-client">{r.data}</span>
+                              )
                             ) : r.badge === "service" ? (
-                              <span className="rdm-badge rdm-badge-service">
+                              <span
+                                className="rdm-badge rdm-badge-service rdm-badge-clickable"
+                                title={`Filter overview by ${r.data}`}
+                                onClick={() => {
+                                  onClose();
+                                  onParentClose && onParentClose();
+                                  navigateTo && navigateTo(r.data, "service");
+                                }}
+                              >
                                 {r.data}
+                                <span className="rdm-badge-link-icon">↗</span>
                               </span>
                             ) : r.queried ? (
                               <span className="rdm-queried-wrap">
@@ -721,11 +743,22 @@ export default function TransactionDetailModal({
   row,
   onClose,
   onUserIp,
+  setPage,
+  onParentClose,
   role = "admin",
   hasImage = false,
   hasVideo = false,
 }) {
   const isPartner = role === "partner";
+  const isAdmin = role === "admin";
+
+  // Close both this modal and the parent TransactionsModal, then navigate
+  const navigateTo = (filterName, filterType) => {
+    onClose();
+    onParentClose && onParentClose();
+    setPage && setPage("overview", { filterName, filterType });
+  };
+
   const [activeTab, setActiveTab] = useState("info"); // "info" | "device" | "events"
   const [devTab, setDevTab] = useState("UI Rendering");
   const [expandedSeq, setExpandedSeq] = useState(null); // which click group is open
@@ -958,17 +991,39 @@ export default function TransactionDetailModal({
                 [
                   [
                     "Client",
-                    <span className="tdd-color-tag tdd-tag-client-green">
-                      {d.client}
-                    </span>,
+                    isAdmin ? (
+                      <span
+                        className="tdd-color-tag tdd-tag-client-green tdd-clickable-tag"
+                        title={`Filter overview by ${d.client}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigateTo(d.client, "client");
+                        }}
+                      >
+                        {d.client}
+                        <span className="tdd-tag-link-icon">↗</span>
+                      </span>
+                    ) : (
+                      <span className="tdd-color-tag tdd-tag-client-green">
+                        {d.client}
+                      </span>
+                    ),
                   ],
                   ["OS", d.os],
                 ],
                 [
                   [
                     "Service",
-                    <span className="tdd-color-tag tdd-tag-service-cyan">
+                    <span
+                      className="tdd-color-tag tdd-tag-service-cyan tdd-clickable-tag"
+                      title={`Filter overview by ${d.service}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigateTo(d.service, "service");
+                      }}
+                    >
                       {d.service}
+                      <span className="tdd-tag-link-icon">↗</span>
                     </span>,
                   ],
                   ["Browser", d.browser],
@@ -1509,6 +1564,10 @@ export default function TransactionDetailModal({
             d={d}
             rawEvents={rawEvents}
             onClose={() => setShowRaw(false)}
+            setPage={setPage}
+            onParentClose={onClose}
+            isAdmin={isAdmin}
+            navigateTo={navigateTo}
           />,
           document.body,
         )}
