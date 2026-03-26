@@ -78,8 +78,8 @@ function buildKpiData(range) {
     { label: "Clicked",     color: "#f59e0b", pp: false,
       value: fmtNum(currClicks),       prevValue: fmtNum(prevClicks),
       change: chgPct(currClicks, prevClicks), desc, data: spark(currClicks, prevClicks) },
-    { label: "CTR",         color: "#8b5cf6", pp: true,
-      value: fmtPct(currCtr),          prevValue: fmtPct(prevCtr),
+    { label: "Clicked ratio", color: "#8b5cf6", pp: true,
+      value: fmtPct(currCtr),            prevValue: fmtPct(prevCtr),
       change: +((currCtr - prevCtr)).toFixed(1), desc, data: spark(currCtr, prevCtr) },
     { label: "Total",       color: "#0ea5e9", pp: false,
       value: fmtNum(curr.total),       prevValue: fmtNum(prev.total),
@@ -182,7 +182,8 @@ const INFO_TIPS = {
   "Clear":        "Transactions that passed all fraud checks.",
   "Clear ratio":  "Percentage of total transactions that were cleared.",
   "Clicked":      "Total click events recorded in the period.",
-  "CTR":          "Click-through rate: clicks divided by visits.",
+  "Trnx":          "Total transactions processed in the period.",
+  "Clicked ratio": "Percentage of visits that resulted in a click.",
   "Total":        "All transactions processed in the period.",
 };
 
@@ -490,7 +491,7 @@ export default function PageOverview({
           <Card>
             <div className="ov2-card-header">
               <div className="ov2-card-title">Channels</div>
-              <span className="ov2-card-sub">CTR by source</span>
+              <span className="ov2-card-sub">Click-through rate by source</span>
             </div>
             <ChannelRows data={CHANNEL_DATA} filterScale={filterScale} onOpen={open} />
           </Card>
