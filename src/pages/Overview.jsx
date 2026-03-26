@@ -10,8 +10,8 @@ import { TransactionsModal } from "../components/modals";
 import { BlockRadarChart } from "../components/charts";
 import {
   BackArrowIcon, InfoIcon, ChevronUpIcon, ChevronDownIcon, FilterIcon,
-  ScoreGauge, HeatmapBar, ChannelRows,
 } from "../components/ui/Icons";
+import { ScoreGauge, HeatmapBar, ChannelRows } from "../components/ui";
 import { histogramData, blockReasons, blockLegend } from "../data/charts";
 import ServicesTrafficChart from "../components/charts/ServicesTrafficChart";
 import PartnersTrafficChart from "../components/charts/PartnersTrafficChart";
@@ -161,9 +161,9 @@ function buildChannelData() {
 // ── Fraud score from real block rate ─────────────────────────────────────────
 function buildFraudScore() {
   const s = dayTotal(0);
-  const score   = s.total > 0 ? parseFloat(((s.blocked / s.total) * 10).toFixed(1)) : 0;
-  const suspect = s.total > 0 ? Math.round(s.clean * 0.15) : 0;
-  return { score, blocked: s.blocked, suspect };
+  const suspect = Math.round(s.clean * 0.15);
+  const clean   = s.clean - suspect;
+  return { clean, suspect, blocked: s.blocked };
 }
 
 // ── Pre-compute stable values ─────────────────────────────────────────────────
@@ -335,7 +335,7 @@ export default function PageOverview({
     }));
   }, [rangeTab, filterScale]);
 
-  const TICK = { fontSize: 9, fill: "#94a3b8" };
+  const TICK = { className: "ov2-axis-tick" };
 
   return (
     <div className="ov2-page">
@@ -439,22 +439,28 @@ export default function PageOverview({
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: -18 }}>
                   <defs>
-                    {[["ov2gC","#22c55e",0.07],["ov2gB","#ef4444",0.15],["ov2gV","#3b82f6",0.10]].map(([id, col, op]) => (
-                      <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor={col} stopOpacity={op} />
-                        <stop offset="95%" stopColor={col} stopOpacity={0}  />
-                      </linearGradient>
-                    ))}
+                    <linearGradient id="ov2gC" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  className="ov2-grad-clean-start" />
+                      <stop offset="95%" className="ov2-grad-clean-end" />
+                    </linearGradient>
+                    <linearGradient id="ov2gB" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  className="ov2-grad-blocked-start" />
+                      <stop offset="95%" className="ov2-grad-blocked-end" />
+                    </linearGradient>
+                    <linearGradient id="ov2gV" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  className="ov2-grad-visits-start" />
+                      <stop offset="95%" className="ov2-grad-visits-end" />
+                    </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" className="ov2-chart-grid" vertical={false} />
                   <XAxis dataKey="d" tick={TICK} axisLine={false} tickLine={false} height={18} />
                   <YAxis tick={TICK} axisLine={false} tickLine={false} width={34}
                     domain={[0, 'dataMax']}
                     tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : v} />
                   <Tooltip content={<AreaTip />} />
-                  {seriesVis.visits  && <Area type="monotone" dataKey="visits"  name="Visits"  stroke="#3b82f6" strokeWidth={1.5} fill="url(#ov2gV)" dot={false} />}
-                  {seriesVis.clean   && <Area type="monotone" dataKey="clean"   name="Clean"   stroke="#22c55e" strokeWidth={2}   fill="url(#ov2gC)" dot={false} />}
-                  {seriesVis.blocked && <Area type="monotone" dataKey="blocked" name="Blocked" stroke="#ef4444" strokeWidth={2}   fill="url(#ov2gB)" dot={false} />}
+                  {seriesVis.visits  && <Area type="monotone" dataKey="visits"  name="Visits"  className="ov2-area-visits"  fill="url(#ov2gV)" dot={false} />}
+                  {seriesVis.clean   && <Area type="monotone" dataKey="clean"   name="Clean"   className="ov2-area-clean"   fill="url(#ov2gC)" dot={false} />}
+                  {seriesVis.blocked && <Area type="monotone" dataKey="blocked" name="Blocked" className="ov2-area-blocked" fill="url(#ov2gB)" dot={false} />}
                 </AreaChart>
               </ResponsiveContainer>
           </div>
@@ -474,7 +480,7 @@ export default function PageOverview({
             <div className="ov2-card-header">
               <div className="ov2-card-title">Fraud Score</div>
             </div>
-            <ScoreGauge score={FRAUD_SCORE.score} blocked={FRAUD_SCORE.blocked} suspect={FRAUD_SCORE.suspect} />
+            <ScoreGauge clean={FRAUD_SCORE.clean} suspect={FRAUD_SCORE.suspect} blocked={FRAUD_SCORE.blocked} />
           </Card>
         </div>
       </div>
