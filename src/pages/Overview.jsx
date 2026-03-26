@@ -368,14 +368,7 @@ export default function PageOverview({
           <h1 className="ov2-page-title">Overview</h1>
           <div className="ov2-page-sub">Real-time transaction intelligence</div>
         </div>
-        <div className="ov2-range-tabs">
-          {["1d","7d","30d"].map(r => (
-            <button key={r}
-              className={`ov2-range-tab${rangeTab === r ? " active" : ""}`}
-              onClick={() => setRangeTab(r)}
-            >{r}</button>
-          ))}
-        </div>
+
       </div>
 
       {/* ── KPI row ── */}
