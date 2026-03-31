@@ -1512,6 +1512,7 @@ export const transactionRows = [
     status: "Block",
     reasons: ["MCPS-2000"],
     interaction: "false",
+    score: 1,
     hasImage: true,
     hasVideo: true,
   },
@@ -1525,6 +1526,7 @@ export const transactionRows = [
     status: "Block",
     reasons: ["MCPS-2000"],
     interaction: "false",
+    score: 1,
     hasImage: true,
     hasVideo: true,
   },
@@ -1538,6 +1540,7 @@ export const transactionRows = [
     status: "Block",
     reasons: ["MCPS-2000"],
     interaction: "false",
+    score: 2,
   },
   {
     id: "ssk4f6b214b2fd4714d92de159e6e22f1c8",
@@ -1549,6 +1552,7 @@ export const transactionRows = [
     status: "Block",
     reasons: ["MCPS-1300", "AMCPS-1310", "MCPS-1400"],
     interaction: "false",
+    score: 0,
     hasImage: true,
   },
   {
@@ -1561,6 +1565,7 @@ export const transactionRows = [
     status: "Block",
     reasons: ["MCPS-1300"],
     interaction: "false",
+    score: 3,
   },
   {
     id: "sskad99d0e3a323fbb5914f47b0b4748aeb",
@@ -1572,6 +1577,7 @@ export const transactionRows = [
     status: "Block",
     reasons: ["MCPS-1300", "AMCPS-1310", "MCPS-1400"],
     interaction: "false",
+    score: 1,
   },
   {
     id: "ssk4335b6f923793e0d09b5b3932e09c719",
@@ -1583,6 +1589,7 @@ export const transactionRows = [
     status: "Block",
     reasons: ["MCPS-1300", "AMCPS-1310", "MCPS-1400"],
     interaction: "false",
+    score: 1,
   },
   {
     id: "sskf290992608b1bb180dc6d2d0fa6ecdfc",
@@ -1594,6 +1601,7 @@ export const transactionRows = [
     status: "Block",
     reasons: ["MCPS-1300", "AMCPS-1310", "MCPS-1400"],
     interaction: "false",
+    score: 1,
   },
   {
     id: "ssk5bfc5a96098427a75e09f296f5244de0",
@@ -1605,6 +1613,7 @@ export const transactionRows = [
     status: "Block",
     reasons: ["MCPS-1300", "AMCPS-1310", "MCPS-1400"],
     interaction: "false",
+    score: 0,
     hasVideo: true,
   },
   {
@@ -1617,6 +1626,7 @@ export const transactionRows = [
     status: "Block",
     reasons: ["MCPS-2000"],
     interaction: "false",
+    score: 2,
   },
   {
     id: "ssk1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6",
@@ -1626,8 +1636,9 @@ export const transactionRows = [
     userIp: "185.22.143.12",
     msisdn: "9647801234567",
     status: "Block",
-    reasons: ["MCPS-1300"],
+    reasons: ["MCPS-1200"],
     interaction: "false",
+    score: 4,
   },
   {
     id: "clr1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o",
@@ -1639,6 +1650,7 @@ export const transactionRows = [
     status: "Clear",
     reasons: [],
     interaction: "true",
+    score: 9,
   },
   {
     id: "clr2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p",
@@ -1650,6 +1662,7 @@ export const transactionRows = [
     status: "Clear",
     reasons: [],
     interaction: "true",
+    score: 9,
     hasImage: true,
     hasVideo: true,
   },
@@ -1663,6 +1676,7 @@ export const transactionRows = [
     status: "Clear",
     reasons: [],
     interaction: "true",
+    score: 9,
   },
   {
     id: "clr4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r",
@@ -1674,6 +1688,7 @@ export const transactionRows = [
     status: "Clear",
     reasons: [],
     interaction: "true",
+    score: 8,
     hasImage: true,
   },
   {
@@ -1686,5 +1701,6 @@ export const transactionRows = [
     status: "Clear",
     reasons: [],
     interaction: "true",
+    score: 10,
   },
 ];

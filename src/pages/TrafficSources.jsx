@@ -353,15 +353,17 @@ export default function Trafficsources() {
               <div className="ts-chart-card">
                 <div className="ts-chart-title">Revenue Share</div>
                 <div className="ts-rev-share-wrap">
-                  <ResponsiveContainer width={130} height={130}>
-                    <PieChart>
-                      <Pie data={SOURCES} cx="50%" cy="50%" innerRadius={36} outerRadius={60}
-                        dataKey="revShare" paddingAngle={2}>
-                        {SOURCES.map((s) => <Cell key={s.id} fill={s.color} />)}
-                      </Pie>
-                      <Tooltip contentStyle={CHART_TT} formatter={(v) => [v + "%", "Share"]} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <PieChart width={130} height={130}>
+                    <Pie data={SOURCES} cx="50%" cy="50%" innerRadius={36} outerRadius={60}
+                      dataKey="revShare" paddingAngle={2}>
+                      {SOURCES.map((s) => <Cell key={s.id} fill={s.color} />)}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ fontSize:11, borderRadius:8, border:"1px solid #e8ecf3", background:"#fff", color:"#0f172a", boxShadow:"0 4px 16px rgba(0,0,0,0.10)" }}
+                      wrapperStyle={{ zIndex:50 }}
+                      formatter={(v, _n, props) => [v + "%", props.payload.name]}
+                    />
+                  </PieChart>
                   <div className="ts-rev-legend">
                     {SOURCES.map((s) => (
                       <div key={s.id} className="ts-rev-legend-item">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { ReportIssueModal } from "../../pages/Support";
 
@@ -134,7 +134,7 @@ function makeDetail(row) {
     browser: "Chrome Mobile",
     network: row?.network || "Asiacell Communications Pjsc",
     status: row?.status || "Clean",
-    score: isBlocked ? 87 : 10,
+    score: row?.score ?? (isBlocked ? 1.0 : 9.0),
     isBlocked,
     reasons: isBlocked ? ["MCPS-2000", "MCPS-1300", "MCPS-0041"] : [],
   };
@@ -287,7 +287,7 @@ function RawDataModal({ d, rawEvents, onClose, setPage, onParentClose, isAdmin, 
       <div className="rdm-backdrop" onClick={onClose} />
       <div className="rdm-modal">
         {/* ── Header ── */}
-        <div className="rdm-header">
+        <div className={`rdm-header ${d.isBlocked ? "rdm-header--blocked" : "rdm-header--clean"}`}>
           <div className="rdm-header-left">
             <div className="rdm-header-icon">📄</div>
             <div>
@@ -765,6 +765,8 @@ export default function TransactionDetailModal({
   const [showReport, setShowReport] = useState(false);
   const [expandedEvt, setExpandedEvt] = useState(null);
   const [showRaw, setShowRaw] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
 
   const d = useMemo(() => makeDetail(row), [row]);
 
@@ -792,6 +794,17 @@ export default function TransactionDetailModal({
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
+
+  useEffect(() => {
+    if (!showMenu) return;
+    const h = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [showMenu]);
 
   useEffect(() => {
     setExpandedEvt(null);
@@ -849,27 +862,83 @@ export default function TransactionDetailModal({
               className={`tdd-header-status-pill ${d.isBlocked ? "blocked" : "clean"}`}
             >
               {d.isBlocked ? "🚫 BLOCKED" : "✅ CLEAN"}
-              <span className="tdd-header-score">Score: {d.score}</span>
+              <span className="tdd-header-score">Score: {typeof d.score === "number" ? Math.round(d.score) : d.score}</span>
             </span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onUserIp && onUserIp(d.userIp);
-              }}
-              className="tdd-btn-useip"
-            >
-              👤 User IP
-            </button>
-            {!isPartner && (
+
+            {/* ── Actions menu ── */}
+            <div className="tdd-menu-wrap" ref={menuRef}>
               <button
                 type="button"
-                className="tdd-btn-anomaly"
-                onClick={(e) => e.stopPropagation()}
+                className={`tdd-menu-btn${showMenu ? " active" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu((v) => !v);
+                }}
+                aria-label="More actions"
               >
-                📊 Anomaly Analysis
+                ⋯
               </button>
-            )}
+              {showMenu && (
+                <div className="tdd-menu-dropdown">
+                  {/* Both roles */}
+                  <button
+                    type="button"
+                    className="tdd-menu-item"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                      onUserIp && onUserIp(d.userIp);
+                    }}
+                  >
+                    👤 User IP
+                  </button>
+
+                  {/* Admin only */}
+                  {!isPartner && (
+                    <button
+                      type="button"
+                      className="tdd-menu-item"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMenu(false);
+                      }}
+                    >
+                      📊 Anomaly Analysis
+                    </button>
+                  )}
+
+                  {/* Admin only — Raw Data (moved from banner) */}
+                  {!isPartner && (
+                    <button
+                      type="button"
+                      className={`tdd-menu-item${showRaw ? " tdd-menu-item-active" : ""}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMenu(false);
+                        setShowRaw((v) => !v);
+                      }}
+                    >
+                      📄 Raw Data {showRaw ? "(on)" : ""}
+                    </button>
+                  )}
+
+                  <div className="tdd-menu-divider" />
+
+                  {/* Both roles */}
+                  <button
+                    type="button"
+                    className="tdd-menu-item"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                    }}
+                  >
+                    ↓ Export Transaction
+                  </button>
+                </div>
+              )}
+            </div>
+
             <button type="button" onClick={onClose} className="tdd-close-btn">
               ×
             </button>
@@ -880,43 +949,23 @@ export default function TransactionDetailModal({
         <div
           className={`tdd-block-banner${d.isBlocked ? "" : " tdd-block-banner-clear"}`}
         >
-          <div className="tdd-block-banner-left">
-            <span className="tdd-block-banner-icon">
-              {d.isBlocked ? "⚠" : "✓"}
-            </span>
-            <div>
-              <div className="tdd-block-banner-title">
-                {d.isBlocked ? "Block Reasons" : "Transaction Status"}
-              </div>
-              <div className="tdd-block-banner-reasons">
-                {d.isBlocked ? (
-                  d.reasons.map((r, i) => (
-                    <span key={i} className="tdd-block-reason-chip">
-                      {r}
-                    </span>
-                  ))
-                ) : (
-                  <span className="tdd-clear-reason-chip">MCPS-0000</span>
-                )}
-              </div>
-            </div>
+          <span className="tdd-block-banner-icon">
+            {d.isBlocked ? "⚠" : "✓"}
+          </span>
+          <span className="tdd-block-banner-title">
+            {d.isBlocked ? "Block Reasons:" : "Transaction Status:"}
+          </span>
+          <div className="tdd-block-banner-reasons">
+            {d.isBlocked ? (
+              d.reasons.map((r, i) => (
+                <span key={i} className="tdd-block-reason-chip">
+                  {r}
+                </span>
+              ))
+            ) : (
+              <span className="tdd-clear-reason-chip">MCPS-0000</span>
+            )}
           </div>
-          {!isPartner && (
-            <div className="tdd-raw-toggle-wrap">
-              <span className="tdd-raw-toggle-label">Raw Data</span>
-              <button
-                type="button"
-                className={`tdd-raw-toggle${showRaw ? " on" : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowRaw((v) => !v);
-                }}
-                aria-label="Toggle Raw Data"
-              >
-                <span className="tdd-raw-toggle-thumb" />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* ── Section Tab Bar ── */}
@@ -1049,7 +1098,7 @@ export default function TransactionDetailModal({
                         {d.isBlocked ? "Block" : "Clear"}
                       </span>
                       <span className="tdd-score-label">
-                        Score: <strong>{d.score}</strong>
+                        Score: <strong>{typeof d.score === "number" ? Math.round(d.score) : d.score}</strong>
                       </span>
                     </>,
                   ],
@@ -1551,9 +1600,6 @@ export default function TransactionDetailModal({
         <div className="tdd-footer">
           <button type="button" onClick={onClose} className="tdd-btn-cancel">
             Close
-          </button>
-          <button type="button" className="tdd-btn-export">
-            Export This Transaction
           </button>
         </div>
       </div>

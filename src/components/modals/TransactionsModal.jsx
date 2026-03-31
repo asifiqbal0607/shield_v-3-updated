@@ -5,6 +5,89 @@ import TransactionDetailModal from "./TransactionDetailModal";
 import TransactionDashboardModal from "./TransactionDashboardModal";
 import { CheckIcon, CopyIcon } from "../ui/Icons";
 
+/* ── Risk helpers ───────────────────────────────────────────────
+   Score 0–10:  7.9–10 = Clean | 3.9–7.9 = Low Risk | 0–3.9 = High Risk
+──────────────────────────────────────────────────────────────── */
+function getRiskTier(score) {
+  if (score == null) return { label: "—",         cls: "",           lblCls: "risk-lbl-none",  tier: "none"  };
+  if (score >= 7.9)  return { label: "Clean",     cls: "risk-clean", lblCls: "risk-lbl-clean", tier: "clean" };
+  if (score >= 3.9)  return { label: "Low Risk",  cls: "risk-low",   lblCls: "risk-lbl-low",   tier: "low"   };
+  return                    { label: "High Risk", cls: "risk-high",  lblCls: "risk-lbl-high",  tier: "high"  };
+}
+
+/** Derive the display status and reasons for a row based on its risk score */
+function deriveRow(r) {
+  const { tier } = getRiskTier(r.score);
+  if (tier === "low") {
+    const reasons = r.reasons.includes("MCPS-1200")
+      ? r.reasons
+      : ["MCPS-1200", ...r.reasons];
+    return { ...r, status: "Suspect", reasons };
+  }
+  return r;
+}
+
+function RiskCell({ score }) {
+  const { label, cls, lblCls } = getRiskTier(score);
+  const pct = score != null ? Math.min(100, (score / 10) * 100) : 0;
+  return (
+    <div className="txn-risk-cell">
+      <div className="txn-risk-top">
+        <span className={`txn-risk-label ${lblCls}`}>{label}</span>
+        {score != null && <span className="txn-risk-score">{Math.round(score)}</span>}
+      </div>
+      <div className="txn-risk-bar">
+        <div className={`txn-risk-fill ${cls}`} style={{ '--fill-w': `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+/* ── Stat Bar ───────────────────────────────────────────────── */
+function StatBar({ total, clearCount, blockCount, suspectCount, onFilter }) {
+  const blockRate = total > 0 ? ((blockCount / total) * 100).toFixed(1) : "0.0";
+  return (
+    <div className="txn-stat-bar">
+      <div className="txn-stat-cell" onClick={() => onFilter("All")}>
+        <span className="txn-stat-dot dot-stat-all" />
+        <div>
+          <div className="txn-stat-num">{total >= 1000 ? `${Math.round(total / 1000)}k` : total}</div>
+          <div className="txn-stat-lbl">Total</div>
+        </div>
+      </div>
+      <div className="txn-stat-cell" onClick={() => onFilter("Clear")}>
+        <span className="txn-stat-dot dot-stat-clear" />
+        <div>
+          <div className="txn-stat-num">{clearCount}</div>
+          <div className="txn-stat-lbl">Clear</div>
+        </div>
+      </div>
+      <div className="txn-stat-cell" onClick={() => onFilter("Block")}>
+        <span className="txn-stat-dot dot-stat-block" />
+        <div>
+          <div className="txn-stat-num">{blockCount}</div>
+          <div className="txn-stat-lbl">Blocked</div>
+        </div>
+      </div>
+      <div className="txn-stat-cell" onClick={() => onFilter("Suspect")}>
+        <span className="txn-stat-dot dot-stat-suspect" />
+        <div>
+          <div className="txn-stat-num">{suspectCount}</div>
+          <div className="txn-stat-lbl">Suspect</div>
+        </div>
+      </div>
+      <div className="txn-stat-cell">
+        <span className="txn-stat-dot dot-stat-warn" />
+        <div>
+          <div className="txn-stat-num">{blockRate}%</div>
+          <div className="txn-stat-lbl">Block Rate</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function CopyCell({ value, display, className }) {
   const [copied, setCopied] = useState(false);
 
@@ -79,7 +162,7 @@ function ReasonCell({ reasons }) {
                 />
                 <div
                   className="txn-reason-popover"
-                  style={{ top: pos.top, left: pos.left }}
+                  style={{ '--pop-top': `${pos.top}px`, '--pop-left': `${pos.left}px` }}
                 >
                   {extra.map((rsn) => (
                     <span
@@ -122,7 +205,9 @@ export default function TransactionsModal({
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const filtered = transactionRows.filter((r) => {
+  const derived = transactionRows.map(deriveRow);
+
+  const filtered = derived.filter((r) => {
     const matchSearch =
       r.id.includes(search) ||
       r.network.toLowerCase().includes(search.toLowerCase()) ||
@@ -130,19 +215,20 @@ export default function TransactionsModal({
       r.userIp.includes(search);
     const matchStatus =
       statusFilter === "All" ||
-      (statusFilter === "Block" && r.status === "Block") ||
-      (statusFilter === "Clear" && r.status === "Clear");
+      (statusFilter === "Block"   && r.status === "Block")   ||
+      (statusFilter === "Clear"   && r.status === "Clear")   ||
+      (statusFilter === "Suspect" && r.status === "Suspect");
     return matchSearch && matchStatus;
   });
 
-  // Counts for tab badges
-  const countAll = transactionRows.length;
-  const countBlock = transactionRows.filter((r) => r.status === "Block").length;
-  const countClear = transactionRows.filter((r) => r.status === "Clear").length;
+  // Counts for stat bar
+  const countAll     = derived.length;
+  const countBlock   = derived.filter((r) => r.status === "Block").length;
+  const countClear   = derived.filter((r) => r.status === "Clear").length;
+  const countSuspect = derived.filter((r) => r.status === "Suspect").length;
 
   const totalPages = Math.ceil(filtered.length / pageSize);
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
-  const totalEntries = 112003;
 
   const pageNums = [];
   if (totalPages <= 7) {
@@ -166,7 +252,7 @@ export default function TransactionsModal({
               </div>
               <div className="txn-subtitle">
                 Showing {filtered.length.toLocaleString()} of{" "}
-                {totalEntries.toLocaleString()} entries
+                {countAll.toLocaleString()} entries
               </div>
             </div>
           </div>
@@ -192,6 +278,15 @@ export default function TransactionsModal({
           </div>
         </div>
 
+        {/* ── Stat Bar ── */}
+        <StatBar
+          total={countAll}
+          clearCount={countClear}
+          blockCount={countBlock}
+          suspectCount={countSuspect}
+          onFilter={(f) => { setStatusFilter(f); setPage(1); }}
+        />
+
         {/* ── IP filter banner ── */}
         {ipFilter && (
           <div className="txn-ip-banner">
@@ -208,35 +303,6 @@ export default function TransactionsModal({
             </button>
           </div>
         )}
-
-        {/* ── Status Filter Tabs ── */}
-        <div className="txn-status-tabs">
-          {[
-            {
-              key: "All",
-              label: "All Transactions",
-              count: countAll,
-              icon: "≡",
-            },
-            { key: "Clear", label: "Clear", count: countClear, icon: "✅" },
-            { key: "Block", label: "Blocked", count: countBlock, icon: "🚫" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => {
-                setStatusFilter(tab.key);
-                setPage(1);
-              }}
-              className={`txn-status-tab${statusFilter === tab.key ? " active" : ""} tab-${tab.key.toLowerCase()}`}
-            >
-              <span className="txn-status-tab-icon">{tab.icon}</span>
-              <span className="txn-status-tab-label">{tab.label}</span>
-              <span className="txn-status-tab-count">
-                {tab.count.toLocaleString()}
-              </span>
-            </button>
-          ))}
-        </div>
 
         {/* ── Controls ── */}
         <div className="txn-controls">
@@ -285,13 +351,14 @@ export default function TransactionsModal({
                   "User IP",
                   "MSISDN",
                   "Status",
+                  "Risk",
                   "Reason",
                   "Interaction",
                   "View",
                 ].map((h) => (
                   <th key={h} className="txn-th">
                     {h}{" "}
-                    {h !== "View" && h !== "Sr." && (
+                    {h !== "View" && h !== "Sr." && h !== "Risk" && (
                       <span className="txn-sort-icon">↕</span>
                     )}
                   </th>
@@ -318,10 +385,17 @@ export default function TransactionsModal({
                   <td className="txn-td-msisdn">{r.msisdn || "—"}</td>
                   <td className="txn-td-badge">
                     <span
-                      className={`txn-status-badge ${r.status === "Block" ? "status-block" : "status-allow"}`}
+                      className={`txn-status-badge ${
+                        r.status === "Block"   ? "status-block"   :
+                        r.status === "Suspect" ? "status-suspect" :
+                        "status-allow"
+                      }`}
                     >
-                      {r.status === "Block" ? "Block" : "Clear"}
+                      {r.status === "Block" ? "Block" : r.status === "Suspect" ? "Suspect" : "Clear"}
                     </span>
+                  </td>
+                  <td className="txn-td-risk">
+                    <RiskCell score={r.score} />
                   </td>
                   <td className="txn-td-reasons">
                     <ReasonCell reasons={r.reasons} />
@@ -348,7 +422,7 @@ export default function TransactionsModal({
           <div className="txn-footer-count">
             Showing {Math.min((page - 1) * pageSize + 1, filtered.length)} to{" "}
             {Math.min(page * pageSize, filtered.length)} of{" "}
-            {totalEntries.toLocaleString()} entries
+            {countAll.toLocaleString()} entries
           </div>
           <div className="txn-pagination">
             <button

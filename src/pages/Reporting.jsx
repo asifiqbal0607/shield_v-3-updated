@@ -302,7 +302,6 @@ function NewReportModal({ onClose, onSave, role, partnerName }) {
                   ["30d", "Last 30 days"],
                   ["90d", "Last 90 days"],
                   ["mtd", "Month to date"],
-                  ["ytd", "Year to date"],
                   ["custom", "Custom"],
                 ].map(([val, lbl]) => (
                   <button
