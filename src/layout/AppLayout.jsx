@@ -17,6 +17,7 @@ export default function AppLayout({
   setPage,
   onLogout,
   children,
+  capLimit = null,
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -82,6 +83,31 @@ export default function AppLayout({
               <span className="app-bc-trail">›</span>
               <span className="app-bc-current">{curLabel}</span>
               {isAdminOnly && <span className="app-env-badge">Admin only</span>}
+
+              {/* Cap limit inline — right after page title, partner only */}
+              {role === "partner" && capLimit && (() => {
+                const used = capLimit.used ?? 0;
+                const pct  = Math.round((used / capLimit.value) * 100);
+                const col  = pct >= 90 ? "#dc2626" : pct >= 60 ? "#d97706" : "#0369a1";
+                function fmt(n) {
+                  if (n >= 1000000) return (n/1000000).toFixed(n%1000000===0?0:1)+"M";
+                  if (n >= 1000)    return (n/1000).toFixed(n%1000===0?0:1)+"K";
+                  return n.toLocaleString();
+                }
+                return (
+                  <div className="app-cap-inline">
+                    <span className="app-cap-inline-icon">🔒</span>
+                    <span className="app-cap-inline-label">Cap</span>
+                    <span className="app-cap-inline-divider" />
+                    <span className="app-cap-inline-used" style={{ color: col }}>{fmt(used)}</span>
+                    <span className="app-cap-inline-sep">/</span>
+                    <span className="app-cap-inline-total">{fmt(capLimit.value)}</span>
+                    <span className="app-cap-inline-period">per {capLimit.period}</span>
+                    <span className="app-cap-inline-divider" />
+                    <span className="app-cap-inline-pct" style={{ color: col }}>{pct}%</span>
+                  </div>
+                );
+              })()}
             </div>
 
             <button

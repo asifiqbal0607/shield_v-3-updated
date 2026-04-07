@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import {
   ResponsiveContainer, AreaChart, Area,
   XAxis, YAxis, Tooltip,
@@ -117,7 +117,7 @@ function makeDefaultAlerts(partnerId) {
       enabled: false,
       threshold: t.defaultThreshold,
       time: t.defaultTime,
-      emails: [],
+      email: "",
     };
     return acc;
   }, { partnerId });
@@ -154,81 +154,6 @@ function toUtcLabel(localTime, offsetHours = 0) {
 }
 
 /* ── Alerts Modal ────────────────────────────────────────────────────────── */
-function EmailTagsInput({ emails = [], onChange, placeholder }) {
-  const [inputVal, setInputVal] = useState("");
-  const [error, setError]       = useState("");
-  const inputRef = useRef(null);
-  // Use a ref so addEmail always sees the latest inputVal without stale closure
-  const inputValRef = useRef(inputVal);
-  useEffect(() => { inputValRef.current = inputVal; }, [inputVal]);
-
-  function isValidEmail(v) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
-  }
-
-  function addEmail(raw) {
-    const val = (raw ?? inputValRef.current).trim().toLowerCase();
-    if (!val) return;
-    if (!isValidEmail(val)) { setError("Invalid email address"); return; }
-    if (emails.includes(val)) { setError("Already added"); return; }
-    onChange([...emails, val]);
-    setInputVal("");
-    inputValRef.current = "";
-    setError("");
-    inputRef.current?.focus();
-  }
-
-  function removeEmail(idx) {
-    onChange(emails.filter((_, i) => i !== idx));
-  }
-
-  function handleKeyDown(e) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      addEmail(inputVal);
-    } else if (e.key === "Backspace" && !inputVal && emails.length > 0) {
-      removeEmail(emails.length - 1);
-    }
-  }
-
-  return (
-    <div className="email-tags-field">
-      {emails.length > 0 && (
-        <div className="email-tags-chips">
-          {emails.map((em, i) => (
-            <span key={em} className="email-tag">
-              {em}
-              <button
-                type="button"
-                className="email-tag-remove"
-                onMouseDown={(e) => { e.preventDefault(); removeEmail(i); }}
-              >×</button>
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="email-tags-input-row">
-        <input
-          ref={inputRef}
-          type="text"
-          className={`form-input${error ? " input-error" : ""}`}
-          value={inputVal}
-          placeholder={emails.length === 0 ? placeholder : "Add another email…"}
-          onChange={(e) => { setInputVal(e.target.value); setError(""); }}
-          onKeyDown={handleKeyDown}
-        />
-        <button
-          type="button"
-          className="email-tags-add-btn"
-          onMouseDown={(e) => { e.preventDefault(); addEmail(inputVal); }}
-          disabled={!inputVal.trim()}
-        >+ Add</button>
-      </div>
-      {error && <div className="email-tags-error">{error}</div>}
-    </div>
-  );
-}
-
 function AlertsModal({ partner, alerts, onClose, onSave }) {
   const [form, setForm] = useState({ ...alerts });
   const [saved, setSaved] = useState(false);
@@ -290,7 +215,6 @@ function AlertsModal({ partner, alerts, onClose, onSave }) {
           <div className="alerts-list">
             {ALERT_TYPES.map((type) => {
               const cfg = form[type.key] || {};
-              const emails = cfg.emails ?? (cfg.email ? [cfg.email] : []);
               return (
                 <div key={type.key} className={`alert-card${cfg.enabled ? " alert-card--on" : ""}`}>
                   <div className="alert-card-header">
@@ -340,13 +264,15 @@ function AlertsModal({ partner, alerts, onClose, onSave }) {
                       </div>
                       <div className="form-field-mt12">
                         <label className="form-label">
-                          Recipient emails
+                          Recipient email
                           <span className="txt-optional"> (leave blank to use partner email)</span>
                         </label>
-                        <EmailTagsInput
-                          emails={emails}
-                          onChange={(val) => setField(type.key, "emails", val)}
+                        <input
+                          type="email"
+                          className="form-input"
                           placeholder={partner.email}
+                          value={cfg.email}
+                          onChange={(e) => setField(type.key, "email", e.target.value)}
                         />
                       </div>
                     </div>
@@ -820,7 +746,7 @@ function ManageTab({ partners, setPartners, onAddClick, partnerAlerts, setPartne
   const filtered = partners.filter((p)=>{
     const q=search.toLowerCase();
     return (p.name.toLowerCase().includes(q)||p.contact.toLowerCase().includes(q)||p.country.toLowerCase().includes(q))
-      &&(filter==="All"||p.status===filter.toLowerCase());
+      &&(filter==="All"||p.status===filter.toLowerCase().replace(/\s+/g,""));
   });
   const visible  = filtered.slice(0,perPage);
   const total    = partners.length;

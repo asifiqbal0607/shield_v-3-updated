@@ -39,7 +39,8 @@ export default function PageRouter({
   if (key === "fraud-codes" && role === "partner") {
     return (
       <>
-        <PageOverview role={role} setPage={setPage} />
+        <PageOverview role={role} setPage={setPage}
+          capLimit={role === "partner" ? { value: 500, period: "day", usedToday: 347 } : null} />
         <FraudDescriptionsModal onClose={() => setPage("overview")} />
       </>
     );
@@ -62,6 +63,7 @@ export default function PageRouter({
         setPage={setPage}
         initialFilter={pageContext?.filterName ?? null}
         filterType={pageContext?.filterType ?? null}
+        capLimit={role === "partner" ? { value: 500, period: "day", usedToday: 347 } : null}
       />
     ),
     "stats-per-service": <PageStatsPerService role={role} />,

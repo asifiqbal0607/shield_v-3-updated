@@ -36,7 +36,7 @@ function dayTotal(dayOffset) {
 }
 
 // ── KPI data derived from real partner traffic ────────────────────────────────
-function buildKpiData(range) {
+function buildKpiData(range, filterScale = 1) {
   const periods = range === "1d" ? 1 : range === "7d" ? 7 : 30;
   const desc = range === "1d" ? "vs yesterday" : range === "7d" ? "vs prev 7d" : "vs prev 30d";
 
@@ -53,37 +53,43 @@ function buildKpiData(range) {
     prev.total += s.total; prev.blocked += s.blocked; prev.clean += s.clean;
   }
 
+  // Apply filter scale to raw counts (ratios recalculated after scaling)
+  const cClean   = curr.clean   * filterScale;
+  const cTotal   = curr.total   * filterScale;
+  const pClean   = prev.clean   * filterScale;
+  const pTotal   = prev.total   * filterScale;
+
   const currCtr = histogramData.reduce((s, d) => s + d.clicks, 0) /
                   Math.max(1, histogramData.reduce((s, d) => s + d.visits, 0)) * 100;
   const prevCtr = currCtr * 0.94;
 
-  const currCleanRatio = curr.total > 0 ? (curr.clean / curr.total) * 100 : 0;
-  const prevCleanRatio = prev.total > 0 ? (prev.clean / prev.total) * 100 : 0;
-  const currClicks = histogramData.reduce((s, d) => s + d.clicks, 0) * periods;
+  const currCleanRatio = cTotal > 0 ? (cClean / cTotal) * 100 : 0;
+  const prevCleanRatio = pTotal > 0 ? (pClean / pTotal) * 100 : 0;
+  const currClicks = histogramData.reduce((s, d) => s + d.clicks, 0) * periods * filterScale;
   const prevClicks = Math.round(currClicks * 0.93);
 
-  // Sparkline: 30 points interpolating curr→prev
+  // Sparkline: 30 points interpolating curr→prev (scaled)
   const spark = (cVal, pVal) => Array.from({ length: 30 }, (_, i) => {
     const t = i / 29;
     return { i, curr: cVal * (0.9 + Math.sin(i * 0.4) * 0.08 + t * 0.02), prev: pVal * (0.9 + Math.sin(i * 0.4 + 1.2) * 0.07) };
   });
 
   return [
-    { label: "Clear",       color: "#22c55e", pp: false,
-      value: fmtNum(curr.clean),       prevValue: fmtNum(prev.clean),
-      change: chgPct(curr.clean, prev.clean), desc, data: spark(curr.clean, prev.clean) },
-    { label: "Clear ratio", color: "#3b82f6", pp: true,
-      value: fmtPct(currCleanRatio),   prevValue: fmtPct(prevCleanRatio),
+    { label: "Clear",         color: "#22c55e", pp: false,
+      value: fmtNum(cClean),         prevValue: fmtNum(pClean),
+      change: chgPct(cClean, pClean), desc, data: spark(cClean, pClean) },
+    { label: "Clear ratio",   color: "#3b82f6", pp: true,
+      value: fmtPct(currCleanRatio), prevValue: fmtPct(prevCleanRatio),
       change: +((currCleanRatio - prevCleanRatio)).toFixed(1), desc, data: spark(currCleanRatio, prevCleanRatio) },
-    { label: "Clicked",     color: "#f59e0b", pp: false,
-      value: fmtNum(currClicks),       prevValue: fmtNum(prevClicks),
+    { label: "Clicked",       color: "#f59e0b", pp: false,
+      value: fmtNum(currClicks),     prevValue: fmtNum(prevClicks),
       change: chgPct(currClicks, prevClicks), desc, data: spark(currClicks, prevClicks) },
     { label: "Clicked ratio", color: "#8b5cf6", pp: true,
-      value: fmtPct(currCtr),            prevValue: fmtPct(prevCtr),
+      value: fmtPct(currCtr),        prevValue: fmtPct(prevCtr),
       change: +((currCtr - prevCtr)).toFixed(1), desc, data: spark(currCtr, prevCtr) },
-    { label: "Total",       color: "#0ea5e9", pp: false,
-      value: fmtNum(curr.total),       prevValue: fmtNum(prev.total),
-      change: chgPct(curr.total, prev.total), desc, data: spark(curr.total, prev.total) },
+    { label: "Total",         color: "#0ea5e9", pp: false,
+      value: fmtNum(cTotal),         prevValue: fmtNum(pTotal),
+      change: chgPct(cTotal, pTotal), desc, data: spark(cTotal, pTotal) },
   ];
 }
 
@@ -328,12 +334,72 @@ function BlockDonut({ data, filterScale }) {
   );
 }
 
+// ── Cap Limit Banner (partner view only) ─────────────────────────────────────
+function CapLimitBanner({ capLimit }) {
+  if (!capLimit) return null;
+
+  const { value, period, usedToday = 0 } = capLimit;
+  const used    = Math.min(usedToday, value);
+  const pct     = Math.round((used / value) * 100);
+  const remaining = Math.max(0, value - used);
+
+  function fmtCap(n) {
+    if (n >= 1000000) return (n / 1000000 % 1 === 0 ? n / 1000000 : (n / 1000000).toFixed(1)) + "M";
+    if (n >= 1000)    return (n / 1000    % 1 === 0 ? n / 1000    : (n / 1000).toFixed(1))    + "K";
+    return n.toLocaleString();
+  }
+
+  const barColor = pct >= 90 ? "#dc2626" : pct >= 60 ? "#d97706" : "#0284c7";
+  const valColor = pct >= 90 ? "#dc2626" : pct >= 60 ? "#d97706" : "#0284c7";
+
+  return (
+    <div className="cap-ov-banner">
+      <div className="cap-ov-left">
+        <div className="cap-ov-icon">🔒</div>
+        <div>
+          <div className="cap-ov-title">API Cap Limit Active</div>
+          <div className="cap-ov-sub">
+            Your account has a transaction cap set by your administrator · resets {period === "day" ? "daily" : "monthly"}
+          </div>
+        </div>
+      </div>
+
+      <div className="cap-ov-right">
+        <div className="cap-ov-stat">
+          <div className="cap-ov-stat-val">{fmtCap(value)}</div>
+          <div className="cap-ov-stat-lbl">limit / {period}</div>
+        </div>
+        <div className="cap-ov-divider" />
+        <div className="cap-ov-stat">
+          <div className="cap-ov-stat-val" style={{ color: valColor }}>{fmtCap(used)}</div>
+          <div className="cap-ov-stat-lbl">used {period === "day" ? "today" : "this month"}</div>
+        </div>
+        <div className="cap-ov-divider" />
+        <div className="cap-ov-usage">
+          <div className="cap-ov-usage-row">
+            <span className="cap-ov-usage-lbl">Usage</span>
+            <span className="cap-ov-usage-pct" style={{ color: valColor }}>{pct}%</span>
+          </div>
+          <div className="cap-ov-bar-track">
+            <div className="cap-ov-bar-fill" style={{ width: `${pct}%`, background: barColor }} />
+          </div>
+          <div className="cap-ov-usage-row" style={{ marginTop: 3 }}>
+            <span className="cap-ov-remaining">{fmtCap(remaining)} remaining</span>
+            <span className="cap-ov-period-badge">Per {period}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // PAGE
 // ════════════════════════════════════════════════════════════════════════════
 export default function PageOverview({
   service, setPage, role = "admin",
   initialFilter = null, filterType = null,
+  capLimit = null,
 }) {
   const isAdmin = role === "admin";
   const [modal,       setModal]       = useState(null);
@@ -347,13 +413,42 @@ export default function PageOverview({
 
   // Real filter scale using trafficService
   const partnerData = useMemo(() => buildPartnerData(1, ALL_PARTNERS), []);
-  const filterScale = useMemo(
-    () => getFilterScale(selectedBar, partnerData),
-    [selectedBar, partnerData],
-  );
 
-  // KPI cards and volume data from real data, reactive to range tab
-  const kpiCards = useMemo(() => buildKpiData(rangeTab), [rangeTab]);
+  // For partner view: build a service-level data map so filterScale works on service selection
+  const serviceData = useMemo(() => {
+    if (isAdmin) return null;
+    // Flatten all services across all partners, sum their traffic
+    const map = {};
+    ALL_PARTNERS.forEach(p => {
+      (p.services || []).forEach(svc => {
+        const key = svc.name ?? svc;
+        if (!map[key]) map[key] = { name: key, total: 0 };
+        const s = getDayStats(p, 0);
+        // distribute partner traffic evenly across their services
+        const share = 1 / Math.max(1, (p.services || []).length);
+        map[key].total += s.total * share;
+      });
+    });
+    return map;
+  }, [isAdmin]);
+
+  const filterScale = useMemo(() => {
+    if (!selectedBar) return 1;
+    if (isAdmin) {
+      // Admin: filter by partner name
+      return getFilterScale(selectedBar, partnerData);
+    } else {
+      // Partner: filter by service name
+      if (!serviceData) return 1;
+      const allTotal = Object.values(serviceData).reduce((s, v) => s + v.total, 0);
+      const match = serviceData[selectedBar];
+      if (!match || allTotal === 0) return 1;
+      return match.total / allTotal;
+    }
+  }, [selectedBar, partnerData, serviceData, isAdmin]);
+
+  // KPI cards and volume data from real data, reactive to range tab AND filter
+  const kpiCards = useMemo(() => buildKpiData(rangeTab, filterScale), [rangeTab, filterScale]);
   const chartData = useMemo(() => {
     const raw = buildVolumeData(rangeTab);
     return raw.map(d => ({

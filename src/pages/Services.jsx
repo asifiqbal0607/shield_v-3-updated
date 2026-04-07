@@ -1753,7 +1753,7 @@ const PARTNER_ACTIONS = [
     icon: "settings",
     label: "Custom Variables",
     color: "#0d9488",
-    iconOnly: false,
+    iconOnly: true,
   },
 ];
 
@@ -1782,6 +1782,12 @@ const ADMIN_ACTIONS = [
     label: "Update Summary",
     icon: "📝",
     color: "#6c757d",
+  },
+  {
+    key: "exportServices",
+    label: "Export Services",
+    icon: "⬇",
+    color: "#2563eb",
   },
 ];
 
@@ -3386,6 +3392,13 @@ function PartnerActions({ row, openModal }) {
         </button>
       ))}
       <button
+        className="svc-export-icon-btn"
+        title="Export Services"
+        onClick={() => openModal("exportServices", row)}
+      >
+        ⬇
+      </button>
+      <button
         className={`svc-partner-toggle-btn${row.status === "active" ? " inactive" : " active"}`}
         title={row.status === "active" ? "Inactive" : "Active"}
         onClick={() => openModal("toggleStatus", row)}
@@ -3423,6 +3436,7 @@ function SvcExportModal({
   inactiveRows,
   onClose,
   role,
+  initialPartner = null,
 }) {
   const isPartnerRole = role === "partner";
 
@@ -3449,8 +3463,9 @@ function SvcExportModal({
   ].sort();
 
   // Admin flow: step 1 = pick partner, step 2 = configure & export
-  const [adminStep, setAdminStep] = useState(isPartnerRole ? 2 : 1);
-  const [selPartner, setSelPartner] = useState("");
+  // If initialPartner is provided (triggered from Actions row), skip step 1
+  const [adminStep, setAdminStep] = useState(isPartnerRole || initialPartner !== null ? 2 : 1);
+  const [selPartner, setSelPartner] = useState(initialPartner ?? "");
 
   const filteredRows = isPartnerRole
     ? baseRows
@@ -3862,6 +3877,7 @@ export default function PageServices({ role = "admin", setPage }) {
   const [activeModal, setActiveModal] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
   const [exportModal, setExportModal] = useState(null);
+  const [exportPartner, setExportPartner] = useState(null);
   const [services, setServices] = useState(svcRows);
   const [confirmToggle, setConfirmToggle] = useState(null); // row to confirm toggle
 
@@ -3872,6 +3888,11 @@ export default function PageServices({ role = "admin", setPage }) {
     }
     if (key === "toggleStatus") {
       setConfirmToggle(row);
+      return;
+    }
+    if (key === "exportServices") {
+      setExportModal("all");
+      setExportPartner(row?.client ?? null);
       return;
     }
     setActiveModal(key);
@@ -4051,8 +4072,8 @@ export default function PageServices({ role = "admin", setPage }) {
             className="svc-stat-clickable"
             role="button"
             tabIndex={0}
-            onClick={() => setExportModal(filter)}
-            onKeyDown={(e) => e.key === "Enter" && setExportModal(filter)}
+            onClick={() => { setExportPartner(null); setExportModal(filter); }}
+            onKeyDown={(e) => e.key === "Enter" && (setExportPartner(null), setExportModal(filter))}
           >
             <Card className="stat-top-4" style={{ "--c": color }}>
               <div className="kpi-stat dyn-color" style={{ "--c": color }}>
@@ -4076,7 +4097,8 @@ export default function PageServices({ role = "admin", setPage }) {
             activeRows={activeServices}
             inactiveRows={inactiveServices}
             role={role}
-            onClose={() => setExportModal(null)}
+            initialPartner={exportPartner}
+            onClose={() => { setExportModal(null); setExportPartner(null); }}
           />,
           document.body,
         )}
@@ -4212,7 +4234,7 @@ export default function PageServices({ role = "admin", setPage }) {
                   wifiPaymentFlow: "svc-col-wifipay",
                   serviceCreated: "svc-col-created",
                   lastUpdate: "svc-col-updated",
-                  actions: "svc-col-actions",
+                  actions: isPartner ? "svc-col-actions-partner" : "svc-col-actions",
                 };
                 return (
                   <col key={col.key} className={colClassMap[col.key] || ""} />

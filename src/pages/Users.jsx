@@ -145,12 +145,8 @@ const MORE_ACTIONS = [
   { key: "loginAs", label: "Login As", icon: "🔑", color: "#7c3aed" },
   { key: "updateStatus", label: "Update Status", icon: "🔄", color: "#d97706" },
   { key: "clearHistory", label: "Clear History", icon: "🗑", color: "#dc2626" },
-  {
-    key: "updateHistory",
-    label: "User Update History",
-    icon: "📜",
-    color: "#16a34a",
-  },
+  { key: "updateHistory", label: "User Update History", icon: "📜", color: "#16a34a" },
+  { key: "capLimit", label: "Cap Limit", icon: "🔒", color: "#0891b2" },
 ];
 
 // ─── Shared Modal shell ───────────────────────────────────────────────────────
@@ -662,6 +658,176 @@ function DeleteModal({ user, onDelete, onClose }) {
 
 // AddUserModal is imported from ./Onboarding_users
 
+// ─── Cap Limit Modal ─────────────────────────────────────────────────────────
+const CAP_STEPS = [250,500,1000,2000,5000,10000,25000,50000,100000,250000,500000,1000000,2000000,5000000,10000000,25000000,50000000];
+
+function fmtCap(n) {
+  if (n >= 1000000) return (n / 1000000 % 1 === 0 ? n / 1000000 : (n / 1000000).toFixed(1)) + "M";
+  if (n >= 1000)    return (n / 1000    % 1 === 0 ? n / 1000    : (n / 1000).toFixed(1))    + "K";
+  return n.toLocaleString();
+}
+
+function EmailTagsField({ label, hint, emails, onChange, placeholder }) {
+  const [inputVal, setInputVal] = useState("");
+  const [error, setError]       = useState("");
+  const inputRef = useRef(null);
+  const valRef   = useRef(inputVal);
+  useEffect(() => { valRef.current = inputVal; }, [inputVal]);
+
+  function isValid(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }
+
+  function add(raw) {
+    const val = (raw ?? valRef.current).trim().toLowerCase();
+    if (!val) return;
+    if (!isValid(val)) { setError("Invalid email address"); return; }
+    if (emails.includes(val)) { setError("Already added"); return; }
+    onChange([...emails, val]);
+    setInputVal(""); valRef.current = "";
+    setError(""); inputRef.current?.focus();
+  }
+
+  function remove(i) { onChange(emails.filter((_, idx) => idx !== i)); }
+
+  return (
+    <div className="cap-email-field">
+      <div className="cap-email-label-row">
+        <span className="usr-field-label">{label}</span>
+        <span className="cap-email-hint">{hint}</span>
+      </div>
+      {emails.length > 0 && (
+        <div className="cap-email-chips">
+          {emails.map((em, i) => (
+            <span key={em} className="cap-email-chip">
+              {em}
+              <button type="button" className="cap-chip-remove"
+                onMouseDown={(e) => { e.preventDefault(); remove(i); }}>×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="cap-email-input-row">
+        <input
+          ref={inputRef} type="text"
+          className="usr-input cap-email-input"
+          value={inputVal}
+          placeholder={emails.length === 0 ? placeholder : "Add another…"}
+          onChange={(e) => { setInputVal(e.target.value); setError(""); }}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); add(inputVal); } }}
+        />
+        <button type="button" className="cap-add-btn"
+          onMouseDown={(e) => { e.preventDefault(); add(inputVal); }}
+          disabled={!inputVal.trim()}>+ Add</button>
+      </div>
+      {error && <div className="cap-email-error">{error}</div>}
+    </div>
+  );
+}
+
+function CapLimitModal({ user, existing, onSave, onClose }) {
+  const [period,       setPeriod]       = useState(existing?.period      || "day");
+  const [stepIdx,      setStepIdx]      = useState(existing?.stepIdx     ?? 0);
+  const [partnerEmails,setPartnerEmails]= useState(existing?.partnerEmails|| []);
+  const [internalEmails,setInternalEmails]= useState(existing?.internalEmails||[]);
+  const [saved,        setSaved]        = useState(false);
+
+  function handleSave() {
+    onSave({ period, stepIdx, value: CAP_STEPS[stepIdx], partnerEmails, internalEmails });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  return (
+    <Modal
+      title="Cap Limit"
+      subtitle={`${user.name} · ${user.role}`}
+      onClose={onClose}
+      width={500}
+    >
+      <div className="cap-info-banner">
+        <span className="cap-info-dot" />
+        When the limit is reached, the API call is blocked and alert emails are sent automatically.
+      </div>
+
+      {/* Period */}
+      <div className="mb-14">
+        <label className="usr-field-label">Billing period</label>
+        <div className="cap-period-row">
+          {["day", "month"].map((p) => (
+            <button key={p} type="button"
+              className={`cap-period-btn${period === p ? " active" : ""}`}
+              onClick={() => setPeriod(p)}>
+              Per {p}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Slider */}
+      <div className="mb-14">
+        <div className="cap-slider-header">
+          <label className="usr-field-label">Cap limit</label>
+          <span className="cap-limit-val">{fmtCap(CAP_STEPS[stepIdx])}</span>
+        </div>
+        <input type="range" className="cap-slider"
+          min="0" max={CAP_STEPS.length - 1} step="1"
+          value={stepIdx}
+          onChange={(e) => setStepIdx(+e.target.value)} />
+        <div className="cap-slider-labels">
+          <span>250</span><span>50M / {period}</span>
+        </div>
+      </div>
+
+      {/* Quick presets */}
+      <div className="mb-14">
+        <label className="usr-field-label">Quick select</label>
+        <div className="cap-presets">
+          {CAP_STEPS.map((val, i) => (
+            <button key={val} type="button"
+              className={`cap-preset-btn${i === stepIdx ? " active" : ""}`}
+              onClick={() => setStepIdx(i)}>
+              {fmtCap(val)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="detail-sep" />
+
+      {/* Partner emails */}
+      <EmailTagsField
+        label="Partner alert emails"
+        hint="Notified when limit is hit"
+        emails={partnerEmails}
+        onChange={setPartnerEmails}
+        placeholder="partner@company.com"
+      />
+
+      {/* Internal emails */}
+      <EmailTagsField
+        label="Internal alert emails"
+        hint="Internal team notifications"
+        emails={internalEmails}
+        onChange={setInternalEmails}
+        placeholder="team@shield.io"
+      />
+
+      {/* Action indicator */}
+      <div className="cap-action-row">
+        <span className="cap-action-label">Action when limit reached</span>
+        <span className="cap-action-value">Block API call</span>
+      </div>
+
+      {/* Footer */}
+      <div className="usr-action-row-end">
+        <button onClick={onClose} className="usr-btn-cancel">Cancel</button>
+        <button onClick={handleSave} className="usr-btn-save" style={{ "--c": "#0891b2" }}>
+          {saved ? "✓ Saved" : "Save Cap Limit"}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 // ─── UserActions component ────────────────────────────────────────────────────
 function UserActions({
   user,
@@ -672,6 +838,9 @@ function UserActions({
   onPlanChange,
   userAuditLog,
   onClearHistory,
+  capLimit,
+  onSaveCapLimit,
+  isAdmin,
 }) {
   const [open, setOpen] = useState(false);
   const [modal, setModal] = useState(null);
@@ -745,6 +914,14 @@ function UserActions({
           onClose={() => setModal(null)}
         />
       )}
+      {modal === "capLimit" && isAdmin && (
+        <CapLimitModal
+          user={user}
+          existing={capLimit}
+          onSave={(cfg) => { onSaveCapLimit(user.email, cfg); setModal(null); }}
+          onClose={() => setModal(null)}
+        />
+      )}
       {modal === "delete" && (
         <DeleteModal
           user={user}
@@ -810,7 +987,7 @@ function UserActions({
                   <div className="txt-strong">{user.name}</div>
                   <div className="txt-muted-sm">{user.email}</div>
                 </div>
-                {MORE_ACTIONS.map((a) => (
+                {MORE_ACTIONS.filter(a => a.key !== "capLimit" || isAdmin).map((a) => (
                   <button
                     key={a.key}
                     onClick={() => openModal(a.key)}
@@ -971,8 +1148,13 @@ export default function PageUsers({ role = "admin", setPage }) {
   };
   const handleClearHistory = (user) => {
     setAuditLog((prev) => ({ ...prev, [user.email]: [] }));
-    addAudit(user.email, "History cleared", "Audit log wiped by admin");
   };
+  const [capLimits, setCapLimits] = useState({}); // { email: { period, stepIdx, value, partnerEmails, internalEmails } }
+  const handleSaveCapLimit = (email, cfg) => {
+    setCapLimits((prev) => ({ ...prev, [email]: cfg }));
+    addAudit(email, "Cap limit set", `${fmtCap(cfg.value)} per ${cfg.period}`);
+  };
+
   const [addModal, setAddModal] = useState(false);
   const handleAddUser = () => {
     // placeholder — in real app would collect form data
@@ -1143,6 +1325,15 @@ export default function PageUsers({ role = "admin", setPage }) {
                       ✏️
                     </button>
                   </div>
+                  {/* Read-only cap limit for partner view */}
+                  {capLimits[u.id] && (
+                    <div className="cap-partner-badge">
+                      <span className="cap-partner-icon">🔒</span>
+                      <span className="cap-partner-text">
+                        Cap: {fmtCap(capLimits[u.id].value)} / {capLimits[u.id].period}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 {isExpanded && (
                   <div className="tab-body">
@@ -1338,6 +1529,7 @@ export default function PageUsers({ role = "admin", setPage }) {
               <col className="usr-col-region" />
               <col className="usr-col-login" />
               <col className="usr-col-status" />
+              <col className="usr-col-cap" />
               <col className="usr-col-actions" />
             </colgroup>
             <thead>
@@ -1349,6 +1541,7 @@ export default function PageUsers({ role = "admin", setPage }) {
                   "Region",
                   "Last Login",
                   "Status",
+                  "Cap Limit",
                   "Actions",
                 ].map((h) => (
                   <th key={h} className="dt-th">
@@ -1358,8 +1551,8 @@ export default function PageUsers({ role = "admin", setPage }) {
               </tr>
             </thead>
             <tbody>
-              {visibleUsers.map((u, i) => (
-                <tr key={i}>
+              {visibleUsers.map((u) => (
+                <tr key={u.id}>
                   <td>
                     <div className="usr-td-user">
                       <div
@@ -1392,6 +1585,15 @@ export default function PageUsers({ role = "admin", setPage }) {
                       <span className="txt-cap">{u.status}</span>
                     </div>
                   </td>
+                  <td className="cap-col-cell">
+                    {capLimits[u.email] ? (
+                      <span className="cap-admin-badge">
+                        🔒 {fmtCap(capLimits[u.email].value)}<span className="cap-period-tag">/ {capLimits[u.email].period === "day" ? "day" : "month"}</span>
+                      </span>
+                    ) : (
+                      <span className="cap-not-set">—</span>
+                    )}
+                  </td>
                   <td className="usr-td-actions">
                     <UserActions
                       user={u}
@@ -1402,6 +1604,9 @@ export default function PageUsers({ role = "admin", setPage }) {
                       onPlanChange={handlePlanChange}
                       onClearHistory={handleClearHistory}
                       userAuditLog={auditLog[u.email] || []}
+                      capLimit={capLimits[u.email]}
+                      onSaveCapLimit={handleSaveCapLimit}
+                      isAdmin={role === "admin"}
                     />
                   </td>
                 </tr>
